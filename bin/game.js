@@ -115,6 +115,18 @@ define("game", ["require", "exports"], function (require, exports) {
     }));
     engine.addEntity(game);
     engine.addEntity(button);
+    var floorMaterial = new Material;
+    floorMaterial.albedoTexture = "materials/WoodFloor.png";
+    var groundMaterial = new Material;
+    groundMaterial.albedoTexture = "materials/StoneFloor.png";
+    var ground = new Entity();
+    ground.set(new Transform());
+    ground.get(Transform).position.set(10, 0, 10);
+    ground.get(Transform).rotation.setEuler(90, 0, 0);
+    ground.get(Transform).scale.setAll(20);
+    ground.set(new PlaneShape);
+    ground.set(groundMaterial);
+    engine.addEntity(ground);
     ///////////////////////////////////
     // Functions
     function newGame() {
@@ -137,25 +149,60 @@ define("game", ["require", "exports"], function (require, exports) {
         gameData.lost = false;
         gameData.won = false;
         gameData.creepInterval = 3;
-        // while(true)
-        // {
-        //   try 
-        //   {
+        // get rid of old path
+        for (var i = 0; i < tileSpawner.pool.length; i++) {
+            engine.removeEntity(tileSpawner.pool[i]);
+        }
+        // create random path
         gameData.path = generatePath();
         log(gameData.path);
+        // draw path with tiles
+        for (var tile in gameData.path) {
+            var pos = gameData.path[tile];
+            tileSpawner.spawnTile(pos);
+        }
+        // add traps
         spawnTrap();
         spawnTrap();
-        //     break;
-        //   }
-        //   catch {}
-        // }
     }
     function spawnTrap() {
         log("new trap");
     }
     function spawnCreep() {
         log("new creep");
+        creepSpawner.spawnCreep();
     }
+    var creepSpawner = {
+        pool: [],
+        getEntityFromPool: function () {
+            for (var i = 0; i < creepSpawner.pool.length; i++) {
+                if (!creepSpawner.pool[i].alive) {
+                    return creepSpawner.pool[i];
+                }
+            }
+            var instance = new Entity();
+            creepSpawner.pool.push(instance);
+            return instance;
+        },
+        spawnCreep: function () {
+            var ent = creepSpawner.getEntityFromPool();
+            var t = ent.getOrCreate(Transform);
+            t.position.set(10, 0.2, 1);
+            //t.rotation.setEuler(90, 0, 0)
+            var d = ent.getOrCreate(CreepData);
+            d.isDead = false;
+            d.gridPos = gameData.path[0];
+            if (!ent.has(GLTFShape)) {
+                ent.set(new GLTFShape("models/BlobMonster/BlobMonster.gltf"));
+                var clipWalk = new AnimationClip("Walking", { loop: true });
+                var clipDie = new AnimationClip("Dying", { loop: false });
+                ent.get(GLTFShape).addClip(clipWalk);
+                ent.get(GLTFShape).addClip(clipDie);
+                clipWalk.play();
+            }
+            engine.addEntity(ent);
+        }
+    };
     function generatePath() {
         var path = [];
         var position = new Vector2(10, 1);
@@ -166,7 +213,7 @@ define("game", ["require", "exports"], function (require, exports) {
         }
         var counter = 0;
         var _loop_1 = function () {
-            if (counter++ > 1000) {
+            if (counter++ > 2000) {
                 throw new Error("Invalid path, try again");
             }
             var nextPosition = new Vector2(position.x, position.y);
@@ -232,4 +279,26 @@ define("game", ["require", "exports"], function (require, exports) {
         }
         return count;
     }
+    var tileSpawner = {
+        pool: [],
+        getEntityFromPool: function () {
+            for (var i = 0; i < tileSpawner.pool.length; i++) {
+                if (!tileSpawner.pool[i].alive) {
+                    return tileSpawner.pool[i];
+                }
+            }
+            var instance = new Entity();
+            tileSpawner.pool.push(instance);
+            return instance;
+        },
+        spawnTile: function (pos) {
+            var ent = tileSpawner.getEntityFromPool();
+            var t = ent.getOrCreate(Transform);
+            t.position.set(pos.x, 0.1, pos.y);
+            t.rotation.setEuler(90, 0, 0);
+            ent.set(new PlaneShape);
+            ent.set(floorMaterial);
+            engine.addEntity(ent);
+        }
+    };
 });

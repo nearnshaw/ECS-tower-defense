@@ -105,6 +105,20 @@ engine.addEntity(game)
 engine.addEntity(button)
 
 
+const floorMaterial = new Material
+floorMaterial.albedoTexture = "materials/WoodFloor.png"
+
+const groundMaterial = new Material
+groundMaterial.albedoTexture = "materials/StoneFloor.png"
+
+let ground = new Entity()
+ground.set(new Transform())
+ground.get(Transform).position.set(10, 0, 10)
+ground.get(Transform).rotation.setEuler(90, 0, 0)
+ground.get(Transform).scale.setAll(20)
+ground.set(new PlaneShape)
+ground.set(groundMaterial)
+engine.addEntity(ground)
 
 ///////////////////////////////////
 // Functions
@@ -121,18 +135,25 @@ function newGame(){
   gameData.won = false
   gameData.creepInterval = 3
 
-  // while(true)
-  // {
-  //   try 
-  //   {
-      gameData.path = generatePath()
-      log(gameData.path)
-      spawnTrap()
-      spawnTrap()
-  //     break;
-  //   }
-  //   catch {}
-  // }
+  // get rid of old path
+  for (let i = 0; i < tileSpawner.pool.length; i++) {
+    engine.removeEntity(tileSpawner.pool[i])
+  }
+
+  // create random path
+  gameData.path = generatePath()
+  log(gameData.path)
+  
+  // draw path with tiles
+  for (let tile in gameData.path){
+    let pos = gameData.path[tile]
+    tileSpawner.spawnTile(pos)
+  }
+
+  // add traps
+  spawnTrap()
+  spawnTrap()
+
 
 }
 
@@ -143,7 +164,49 @@ function spawnTrap(){
 
 function spawnCreep(){
   log("new creep")
+  creepSpawner.spawnCreep()
 }
+
+
+const creepSpawner = {
+  pool: [] as Entity[],
+
+  getEntityFromPool(): Entity | null {
+    for (let i = 0; i < creepSpawner.pool.length; i++) {
+      if (!creepSpawner.pool[i].alive) {
+        return creepSpawner.pool[i]
+      }
+    }
+
+    const instance = new Entity()
+    creepSpawner.pool.push(instance)
+    return instance
+  },
+
+  spawnCreep() {
+    const ent = creepSpawner.getEntityFromPool()
+
+    let t = ent.getOrCreate(Transform)
+    t.position.set(10, 0.2, 1)
+    //t.rotation.setEuler(90, 0, 0)
+
+    let d = ent.getOrCreate(CreepData)
+    d.isDead = false
+    d.gridPos = gameData.path[0]
+
+    if (!ent.has(GLTFShape)){
+      ent.set(new GLTFShape("models/BlobMonster/BlobMonster.gltf"))
+      const clipWalk = new AnimationClip("Walking", {loop: true})
+      const clipDie= new AnimationClip("Dying", {loop: false})
+      ent.get(GLTFShape).addClip(clipWalk)
+      ent.get(GLTFShape).addClip(clipDie)
+      clipWalk.play()
+    }
+    
+    engine.addEntity(ent)
+  }
+}
+
 
 
 
@@ -161,7 +224,7 @@ function generatePath(): Vector2[]
   let counter = 0
   while(position.y < 18)
   {
-    if(counter++ > 1000)
+    if(counter++ > 2000)
     {
       throw new Error("Invalid path, try again")
     }
@@ -220,4 +283,34 @@ function getNeighborCount(path: Vector2[], position: Vector2)
   }
 
   return count;
+}
+
+
+const tileSpawner = {
+  pool: [] as Entity[],
+
+  getEntityFromPool(): Entity | null {
+    for (let i = 0; i < tileSpawner.pool.length; i++) {
+      if (!tileSpawner.pool[i].alive) {
+        return tileSpawner.pool[i]
+      }
+    }
+
+    const instance = new Entity()
+    tileSpawner.pool.push(instance)
+    return instance
+  },
+
+  spawnTile(pos: Vector2) {
+    const ent = tileSpawner.getEntityFromPool()
+
+    let t = ent.getOrCreate(Transform)
+    t.position.set(pos.x, 0.1, pos.y)
+    t.rotation.setEuler(90, 0, 0)
+
+    ent.set(new PlaneShape)
+    ent.set(floorMaterial)
+
+    engine.addEntity(ent)
+  }
 }
