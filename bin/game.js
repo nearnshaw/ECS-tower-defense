@@ -94,6 +94,48 @@ define("game", ["require", "exports"], function (require, exports) {
     }());
     exports.SpawnCreeps = SpawnCreeps;
     engine.addSystem(new SpawnCreeps);
+    var moveBlobs = /** @class */ (function () {
+        function moveBlobs() {
+        }
+        moveBlobs.prototype.update = function () {
+            var e_1, _a;
+            try {
+                for (var _b = __values(creeps.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var creep = _c.value;
+                    var transform = creep.get(Transform);
+                    var path = gameData.path;
+                    var creepData = creep.get(CreepData);
+                    if (creepData.lerpFraction < 1) {
+                        var pos2d = Vector2.Lerp(path[creepData.pathPos], path[creepData.pathPos + 1], creepData.lerpFraction);
+                        transform.position.set(pos2d.x, 0.25, pos2d.y);
+                        creepData.lerpFraction += 1 / 60;
+                    }
+                    else {
+                        creepData.pathPos += 1;
+                        //path.previousPos = path.target
+                        //path.target = myPath.path[path.nextPathIndex]
+                        creepData.lerpFraction = 0;
+                        //transform.lookAt(path.target)  
+                        //rotate.previousRot = transform.rotation
+                        //rotate.targetRot = fromToRotation(transform.position, path.target)
+                        //rotate.rotateFraction = 0
+                        var nextPos = new Vector3(path[creepData.pathPos + 1].x, 0.25, path[creepData.pathPos + 1].y);
+                        transform.lookAt(nextPos);
+                    }
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+        };
+        return moveBlobs;
+    }());
+    exports.moveBlobs = moveBlobs;
+    engine.addSystem(new moveBlobs());
     //////////////////////////////////////////
     // Add entities
     var game = new Entity();
@@ -130,19 +172,19 @@ define("game", ["require", "exports"], function (require, exports) {
     ///////////////////////////////////
     // Functions
     function newGame() {
-        var e_1, _a;
+        var e_2, _a;
         try {
             for (var _b = __values(creeps.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
                 var creep = _c.value;
                 creep.get(CreepData).isDead = true;
             }
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_1) throw e_1.error; }
+            finally { if (e_2) throw e_2.error; }
         }
         gameData.humanScore = 0;
         gameData.creepScore = 0;
@@ -187,11 +229,13 @@ define("game", ["require", "exports"], function (require, exports) {
         spawnCreep: function () {
             var ent = creepSpawner.getEntityFromPool();
             var t = ent.getOrCreate(Transform);
-            t.position.set(10, 0.2, 1);
+            t.position.set(10, 0.25, 1);
             //t.rotation.setEuler(90, 0, 0)
             var d = ent.getOrCreate(CreepData);
             d.isDead = false;
             d.gridPos = gameData.path[0];
+            d.pathPos = 0;
+            d.lerpFraction = 0;
             if (!ent.has(GLTFShape)) {
                 ent.set(new GLTFShape("models/BlobMonster/BlobMonster.gltf"));
                 var clipWalk = new AnimationClip("Walking", { loop: true });
@@ -251,7 +295,7 @@ define("game", ["require", "exports"], function (require, exports) {
             && (position.x > 1 || position.y > 1);
     }
     function getNeighborCount(path, position) {
-        var e_2, _a;
+        var e_3, _a;
         var neighbors = [
             { x: position.x + 1, y: position.y },
             { x: position.x - 1, y: position.y },
@@ -270,12 +314,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 _loop_2(neighbor);
             }
         }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        catch (e_3_1) { e_3 = { error: e_3_1 }; }
         finally {
             try {
                 if (neighbors_1_1 && !neighbors_1_1.done && (_a = neighbors_1.return)) _a.call(neighbors_1);
             }
-            finally { if (e_2) throw e_2.error; }
+            finally { if (e_3) throw e_3.error; }
         }
         return count;
     }

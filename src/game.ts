@@ -36,6 +36,8 @@ const tiles = engine.getComponentGroup(TilePos)
 export class CreepData {
   gridPos: Vector2
   isDead: boolean
+  pathPos: number
+  lerpFraction: number
 }
 
 const creeps = engine.getComponentGroup(CreepData)
@@ -75,6 +77,42 @@ export class SpawnCreeps implements ISystem {
 
 engine.addSystem(new SpawnCreeps)
 
+
+export class moveBlobs {
+  update() {
+    for( let creep of creeps.entities){
+      let transform = creep.get(Transform)
+      let path =  gameData.path
+      let creepData = creep.get(CreepData)
+      if (creepData.lerpFraction < 1) {
+          const pos2d = Vector2.Lerp(
+          path[creepData.pathPos],
+          path[creepData.pathPos + 1],
+          creepData.lerpFraction
+          )
+        
+          transform.position.set(pos2d.x, 0.25, pos2d.y)
+          creepData.lerpFraction += 1 / 60
+      } else {
+        creepData.pathPos += 1
+        
+        //path.previousPos = path.target
+        //path.target = myPath.path[path.nextPathIndex]
+        creepData.lerpFraction = 0
+        //transform.lookAt(path.target)  
+  
+        //rotate.previousRot = transform.rotation
+        //rotate.targetRot = fromToRotation(transform.position, path.target)
+        //rotate.rotateFraction = 0
+        let nextPos = new Vector3(path[creepData.pathPos + 1].x , 0.25, path[creepData.pathPos + 1].y)
+        transform.lookAt(nextPos)
+      }
+
+    }  
+  }
+}
+
+engine.addSystem(new moveBlobs())
 
 //////////////////////////////////////////
 // Add entities
@@ -187,12 +225,14 @@ const creepSpawner = {
     const ent = creepSpawner.getEntityFromPool()
 
     let t = ent.getOrCreate(Transform)
-    t.position.set(10, 0.2, 1)
+    t.position.set(10, 0.25, 1)
     //t.rotation.setEuler(90, 0, 0)
 
     let d = ent.getOrCreate(CreepData)
     d.isDead = false
     d.gridPos = gameData.path[0]
+    d.pathPos = 0
+    d.lerpFraction = 0
 
     if (!ent.has(GLTFShape)){
       ent.set(new GLTFShape("models/BlobMonster/BlobMonster.gltf"))
