@@ -158,6 +158,52 @@ ground.set(new PlaneShape)
 ground.set(groundMaterial)
 engine.addEntity(ground)
 
+
+let trap1Parent = new Entity()
+trap1Parent.set(new Transform())
+trap1Parent.get(Transform).position.set(5, 0, 5)
+trap1Parent.get(Transform).scale.setAll(0.5)
+
+const leverOff = new AnimationClip("LeverOff", {loop: false})
+const leverOn= new AnimationClip("LeverOn", {loop: false})
+const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
+const spikeUp = new AnimationClip("SpikeUp", {loop: false})
+const despawn= new AnimationClip("Despawn", {loop: false})
+
+let trap1 = new Entity()
+trap1.set(new Transform())
+trap1.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
+trap1.get(GLTFShape).addClip(spikeUp)
+trap1.get(GLTFShape).addClip(despawn)
+
+
+trap1.setParent(trap1Parent)
+
+let leftLever1 = new Entity()
+leftLever1.set(new Transform())
+leftLever1.get(Transform).position.set(-1.5, 0, 0)
+leftLever1.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
+leftLever1.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
+leftLever1.get(GLTFShape).addClip(leverOff)
+leftLever1.get(GLTFShape).addClip(leverOn)
+leftLever1.get(GLTFShape).addClip(LeverDespawn)
+leftLever1.setParent(trap1Parent)
+
+let rightLever1 = new Entity()
+rightLever1.set(new Transform())
+rightLever1.get(Transform).position.set(1.5, 0, 0)
+rightLever1.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
+rightLever1.set(new GLTFShape("models/Lever/LeverRed.gltf"))
+rightLever1.get(GLTFShape).addClip(leverOff)
+rightLever1.get(GLTFShape).addClip(leverOn)
+rightLever1.get(GLTFShape).addClip(LeverDespawn)
+rightLever1.setParent(trap1Parent)
+
+engine.addEntity(trap1)
+engine.addEntity(leftLever1)
+engine.addEntity(rightLever1)
+engine.addEntity(trap1Parent)
+
 ///////////////////////////////////
 // Functions
 
