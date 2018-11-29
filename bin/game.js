@@ -31,6 +31,7 @@ define("game", ["require", "exports"], function (require, exports) {
         ButtonState[ButtonState["Pressed"] = 1] = "Pressed";
     })(ButtonState = exports.ButtonState || (exports.ButtonState = {}));
     var trapAmount = 2;
+    var MAX_CREEPS = 8;
     ////////////////////////////////////
     // Custom components
     var ButtonData = /** @class */ (function () {
@@ -234,6 +235,7 @@ define("game", ["require", "exports"], function (require, exports) {
         log("new creep");
         creepSpawner.spawnCreep();
     }
+    // CREEP spawner
     var creepSpawner = {
         creepPool: [],
         getEntityFromPool: function () {
@@ -242,12 +244,19 @@ define("game", ["require", "exports"], function (require, exports) {
                     return creepSpawner.creepPool[i];
                 }
             }
-            var instance = new Entity();
-            creepSpawner.creepPool.push(instance);
-            return instance;
+            if (creepSpawner.creepPool.length < MAX_CREEPS) {
+                var instance = new Entity();
+                creepSpawner.creepPool.push(instance);
+                return instance;
+            }
+            else {
+                return null;
+            }
         },
         spawnCreep: function () {
             var ent = creepSpawner.getEntityFromPool();
+            if (!ent)
+                return;
             var t = ent.getOrCreate(Transform);
             t.position.set(10, 0.25, 1);
             //t.rotation.setEuler(90, 0, 0)
@@ -343,6 +352,7 @@ define("game", ["require", "exports"], function (require, exports) {
         }
         return count;
     }
+    // TILE spawner
     var tileSpawner = {
         tilePool: [],
         getEntityFromPool: function () {
@@ -365,6 +375,7 @@ define("game", ["require", "exports"], function (require, exports) {
             engine.addEntity(ent);
         }
     };
+    // TRAP spawner
     function placeTraps() {
         for (var i = 0; i < trapAmount; i++) {
             trapSpawner.spawnTrap();

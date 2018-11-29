@@ -16,6 +16,7 @@ export const enum TrapState
 
 
 const trapAmount = 2
+const MAX_CREEPS = 8
 
 ////////////////////////////////////
 // Custom components
@@ -235,6 +236,7 @@ function spawnCreep(){
   creepSpawner.spawnCreep()
 }
 
+// CREEP spawner
 
 const creepSpawner = {
   creepPool: [] as Entity[],
@@ -246,13 +248,21 @@ const creepSpawner = {
       }
     }
 
-    const instance = new Entity()
-    creepSpawner.creepPool.push(instance)
-    return instance
+    if (creepSpawner.creepPool.length < MAX_CREEPS){
+      const instance = new Entity()
+      creepSpawner.creepPool.push(instance)
+      return instance
+    } 
+    else {
+      return null
+    }
+   
   },
 
   spawnCreep() {
     const ent = creepSpawner.getEntityFromPool()
+
+    if (!ent) return
 
     let t = ent.getOrCreate(Transform)
     t.position.set(10, 0.25, 1)
@@ -355,6 +365,7 @@ function getNeighborCount(path: Vector2[], position: Vector2)
   return count;
 }
 
+// TILE spawner
 
 const tileSpawner = {
   tilePool: [] as Entity[],
@@ -384,6 +395,8 @@ const tileSpawner = {
     engine.addEntity(ent)
   }
 }
+
+// TRAP spawner
 
 function placeTraps(){
   for (let i = 0; i < trapAmount; i ++)
