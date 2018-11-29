@@ -14,6 +14,9 @@ export const enum TrapState
   NotAvailable,
 }
 
+
+const trapAmount = 2
+
 ////////////////////////////////////
 // Custom components
 
@@ -46,6 +49,20 @@ const creeps = engine.getComponentGroup(CreepData)
 export class TrapData {
   gridPos: Vector2
   trapState: TrapState
+  leftLever: boolean
+  rightLever: boolean
+  constructor(gridPos: Vector2) {
+    this.gridPos = gridPos
+    this.trapState = TrapState.Available
+    this.leftLever = false
+    this.rightLever = false
+  }
+  reset(gridPos: Vector2) {
+    this.gridPos = gridPos
+    this.trapState = TrapState.Available
+    this.leftLever = false
+    this.rightLever = false
+  }
 }
 
 const traps = engine.getComponentGroup(TrapData)
@@ -159,10 +176,8 @@ ground.set(groundMaterial)
 engine.addEntity(ground)
 
 
-let trap1Parent = new Entity()
-trap1Parent.set(new Transform())
-trap1Parent.get(Transform).position.set(5, 0, 5)
-trap1Parent.get(Transform).scale.setAll(0.5)
+
+
 
 const leverOff = new AnimationClip("LeverOff", {loop: false})
 const leverOn= new AnimationClip("LeverOn", {loop: false})
@@ -170,39 +185,9 @@ const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
 const spikeUp = new AnimationClip("SpikeUp", {loop: false})
 const despawn= new AnimationClip("Despawn", {loop: false})
 
-let trap1 = new Entity()
-trap1.set(new Transform())
-trap1.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
-trap1.get(GLTFShape).addClip(spikeUp)
-trap1.get(GLTFShape).addClip(despawn)
 
 
-trap1.setParent(trap1Parent)
 
-let leftLever1 = new Entity()
-leftLever1.set(new Transform())
-leftLever1.get(Transform).position.set(-1.5, 0, 0)
-leftLever1.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
-leftLever1.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
-leftLever1.get(GLTFShape).addClip(leverOff)
-leftLever1.get(GLTFShape).addClip(leverOn)
-leftLever1.get(GLTFShape).addClip(LeverDespawn)
-leftLever1.setParent(trap1Parent)
-
-let rightLever1 = new Entity()
-rightLever1.set(new Transform())
-rightLever1.get(Transform).position.set(1.5, 0, 0)
-rightLever1.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
-rightLever1.set(new GLTFShape("models/Lever/LeverRed.gltf"))
-rightLever1.get(GLTFShape).addClip(leverOff)
-rightLever1.get(GLTFShape).addClip(leverOn)
-rightLever1.get(GLTFShape).addClip(LeverDespawn)
-rightLever1.setParent(trap1Parent)
-
-engine.addEntity(trap1)
-engine.addEntity(leftLever1)
-engine.addEntity(rightLever1)
-engine.addEntity(trap1Parent)
 
 ///////////////////////////////////
 // Functions
@@ -211,6 +196,7 @@ function newGame(){
   for(let creep of creeps.entities)
   {
     creep.get(CreepData).isDead = true;
+    //engine.removeEntity(creep)
   }
 
   gameData.humanScore = 0
@@ -220,8 +206,8 @@ function newGame(){
   gameData.creepInterval = 3
 
   // get rid of old path
-  for (let i = 0; i < tileSpawner.pool.length; i++) {
-    engine.removeEntity(tileSpawner.pool[i])
+  for (let i = 0; i < tileSpawner.tilePool.length; i++) {
+    engine.removeEntity(tileSpawner.tilePool[i])
   }
 
   // create random path
@@ -235,9 +221,7 @@ function newGame(){
   }
 
   // add traps
-  spawnTrap()
-  spawnTrap()
-
+  placeTraps()
 
 }
 
@@ -253,17 +237,17 @@ function spawnCreep(){
 
 
 const creepSpawner = {
-  pool: [] as Entity[],
+  creepPool: [] as Entity[],
 
   getEntityFromPool(): Entity | null {
-    for (let i = 0; i < creepSpawner.pool.length; i++) {
-      if (!creepSpawner.pool[i].alive) {
-        return creepSpawner.pool[i]
+    for (let i = 0; i < creepSpawner.creepPool.length; i++) {
+      if (!creepSpawner.creepPool[i].alive) {
+        return creepSpawner.creepPool[i]
       }
     }
 
     const instance = new Entity()
-    creepSpawner.pool.push(instance)
+    creepSpawner.creepPool.push(instance)
     return instance
   },
 
@@ -373,17 +357,17 @@ function getNeighborCount(path: Vector2[], position: Vector2)
 
 
 const tileSpawner = {
-  pool: [] as Entity[],
+  tilePool: [] as Entity[],
 
   getEntityFromPool(): Entity | null {
-    for (let i = 0; i < tileSpawner.pool.length; i++) {
-      if (!tileSpawner.pool[i].alive) {
-        return tileSpawner.pool[i]
+    for (let i = 0; i < tileSpawner.tilePool.length; i++) {
+      if (!tileSpawner.tilePool[i].alive) {
+        return tileSpawner.tilePool[i]
       }
     }
 
     const instance = new Entity()
-    tileSpawner.pool.push(instance)
+    tileSpawner.tilePool.push(instance)
     return instance
   },
 
@@ -400,3 +384,110 @@ const tileSpawner = {
     engine.addEntity(ent)
   }
 }
+
+function placeTraps(){
+
+  for (let i = 0; i < trapAmount; i ++)
+  {
+    let pos = randomTrapPosition()
+
+    let trap = new Entity()
+    trap.set(new Transform())
+    trap.get(Transform).position.set(pos.x, 0, pos.y)
+    trap.get(Transform).scale.setAll(0.5)
+    trap.set(new TrapData(pos))
+    trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
+    trap.get(GLTFShape).addClip(spikeUp)
+    trap.get(GLTFShape).addClip(despawn)
+
+
+    let leftLever = new Entity()
+    leftLever.set(new Transform())
+    leftLever.get(Transform).position.set(-1.5, 0, 0)
+    leftLever.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
+    leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
+    leftLever.get(GLTFShape).addClip(leverOff)
+    leftLever.get(GLTFShape).addClip(leverOn)
+    leftLever.get(GLTFShape).addClip(LeverDespawn)
+    leftLever.setParent(trap)
+    leftLever.set(new OnClick(e => {
+      operateLeftLever(leftLever)
+    }))
+
+    let rightLever = new Entity()
+    rightLever.set(new Transform())
+    rightLever.get(Transform).position.set(1.5, 0, 0)
+    rightLever.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
+    rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
+    rightLever.get(GLTFShape).addClip(leverOff)
+    rightLever.get(GLTFShape).addClip(leverOn)
+    rightLever.get(GLTFShape).addClip(LeverDespawn)
+    rightLever.setParent(trap)
+    rightLever.set(new OnClick(e => {
+      operateRightLever(rightLever)
+    }))
+
+
+    engine.addEntity(trap)
+    engine.addEntity(leftLever)
+    engine.addEntity(rightLever)
+  }
+}
+
+
+function operateLeftLever(lever: Entity){
+  let data = lever.getParent().get(TrapData)
+  if(data.leftLever){
+    data.leftLever = false
+    lever.get(GLTFShape).getClip("LeverOff").play()
+  } else {
+    data.leftLever = true
+    lever.get(GLTFShape).getClip("LeverOn").play()
+    if (data.rightLever){
+      data.trapState = TrapState.Fired
+      lever.getParent().get(GLTFShape).getClip("SpikeUp").play()
+    }
+  }
+}
+
+function operateRightLever(lever: Entity){
+  let data = lever.getParent().get(TrapData)
+  if(data.rightLever){
+    data.rightLever = false
+    lever.get(GLTFShape).getClip("LeverOff").play()
+  } else {
+    data.rightLever = true
+    lever.get(GLTFShape).getClip("LeverOn").play()
+    if (data.leftLever){
+      data.trapState = TrapState.Fired
+      lever.getParent().get(GLTFShape).getClip("SpikeUp").play()
+    }
+  }
+}
+
+
+function randomTrapPosition()
+  {
+    let counter = 0;
+    while(true)
+    {
+      if(counter++ > 1000)
+      {
+        throw new Error("Invalid path, try again");
+      }
+      let path = gameData.path
+      const posIndex = Math.floor(Math.random() * path.length)
+      const position = gameData.path[posIndex]
+      if( path.filter((p) => p.x == position.x - 1 && p.y == position.y).length > 0
+        && path.filter((p) => p.x == position.x + 1 && p.y == position.y).length > 0
+        && position.y > 2
+        && position.y < 18
+        && position.x > 2
+        && position.x < 18
+        && traps.entities.filter((t) => JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos)).length > 0
+      )
+      {
+        return position 
+      }
+    } 
+  }
