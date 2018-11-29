@@ -51,7 +51,7 @@ export class TrapData {
   trapState: TrapState
   leftLever: boolean
   rightLever: boolean
-  constructor(gridPos: Vector2) {
+  constructor(gridPos?: Vector2) {
     this.gridPos = gridPos
     this.trapState = TrapState.Available
     this.leftLever = false
@@ -386,54 +386,96 @@ const tileSpawner = {
 }
 
 function placeTraps(){
-
   for (let i = 0; i < trapAmount; i ++)
   {
+    trapSpawner.spawnTrap()
+  }
+}
+
+
+const trapSpawner = {
+  trapPool: [] as Entity[],
+
+  getEntityFromPool(): Entity | null {
+    for (let i = 0; i < trapSpawner.trapPool.length; i++) {
+      if (!trapSpawner.trapPool[i].alive) {
+        return trapSpawner.trapPool[i]
+      }
+    }
+
+    const instance = new Entity()
+    trapSpawner.trapPool.push(instance)
+    return instance
+  },
+
+  spawnTrap() {
+    const trap = trapSpawner.getEntityFromPool()
+    engine.addEntity(trap) 
+    const leftLever = trapSpawner.getEntityFromPool()
+    engine.addEntity(leftLever)
+    const rightLever = trapSpawner.getEntityFromPool()
+    engine.addEntity(rightLever)
+
     let pos = randomTrapPosition()
 
-    let trap = new Entity()
-    trap.set(new Transform())
-    trap.get(Transform).position.set(pos.x, 0.11, pos.y)
-    trap.get(Transform).scale.setAll(0.5)
-    trap.set(new TrapData(pos))
-    trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
-    trap.get(GLTFShape).addClip(spikeUp)
-    trap.get(GLTFShape).addClip(despawn)
+    let t = trap.getOrCreate(Transform)
+    t.position.set(pos.x, 0.11, pos.y)
+    t.scale.setAll(0.5)
 
+    let d = trap.getOrCreate(TrapData)
+    d.gridPos = pos
 
-    let leftLever = new Entity()
-    leftLever.set(new Transform())
-    leftLever.get(Transform).position.set(-1.5, 0, 0)
-    leftLever.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
-    leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
-    leftLever.get(GLTFShape).addClip(leverOff)
-    leftLever.get(GLTFShape).addClip(leverOn)
-    leftLever.get(GLTFShape).addClip(LeverDespawn)
+    if (!trap.has(GLTFShape)){
+      trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
+      const clipWalk = new AnimationClip("Walking", {loop: true})
+      const clipDie= new AnimationClip("Dying", {loop: false})
+      trap.get(GLTFShape).addClip(spikeUp)
+      trap.get(GLTFShape).addClip(despawn)
+    }
+
+    let lt = leftLever.getOrCreate(Transform)
+    lt.position.set(-1.5, 0, 0)
+    lt.rotation.eulerAngles = new Vector3(0, 90, 0)
+
+    if (!leftLever.has(GLTFShape)){
+      leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
+      leftLever.get(GLTFShape).addClip(leverOff)
+      leftLever.get(GLTFShape).addClip(leverOn)
+      leftLever.get(GLTFShape).addClip(LeverDespawn)
+    }
+
     leftLever.setParent(trap)
-    leftLever.set(new OnClick(e => {
-      operateLeftLever(leftLever)
-    }))
+    
+    if (!leftLever.has(OnClick)){
+      leftLever.set(new OnClick(e => {
+        operateLeftLever(leftLever)
+      }))
+    }
 
-    let rightLever = new Entity()
-    rightLever.set(new Transform())
-    rightLever.get(Transform).position.set(1.5, 0, 0)
-    rightLever.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0)
-    rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
-    rightLever.get(GLTFShape).addClip(leverOff)
-    rightLever.get(GLTFShape).addClip(leverOn)
-    rightLever.get(GLTFShape).addClip(LeverDespawn)
+    let rt = rightLever.getOrCreate(Transform)
+    rt.position.set(1.5, 0, 0)
+    rt.rotation.eulerAngles = new Vector3(0, 90, 0)
+
+    if (!rightLever.has(GLTFShape)){
+      rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
+      rightLever.get(GLTFShape).addClip(leverOff)
+      rightLever.get(GLTFShape).addClip(leverOn)
+      rightLever.get(GLTFShape).addClip(LeverDespawn)
+    }
+
     rightLever.setParent(trap)
-    rightLever.set(new OnClick(e => {
-      operateRightLever(rightLever)
-    }))
+    
+    if (!rightLever.has(OnClick)){
+      rightLever.set(new OnClick(e => {
+        operateLeftLever(rightLever)
+      }))
+    }
 
-
-    engine.addEntity(trap)
-    engine.addEntity(leftLever)
-    engine.addEntity(rightLever)
     log("placed a trap in" + pos)
   }
 }
+
+
 
 
 function operateLeftLever(lever: Entity){

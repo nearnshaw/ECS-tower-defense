@@ -366,49 +366,75 @@ define("game", ["require", "exports"], function (require, exports) {
         }
     };
     function placeTraps() {
-        var _loop_3 = function (i) {
-            var pos = randomTrapPosition();
-            var trap = new Entity();
-            trap.set(new Transform());
-            trap.get(Transform).position.set(pos.x, 0.11, pos.y);
-            trap.get(Transform).scale.setAll(0.5);
-            trap.set(new TrapData(pos));
-            trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"));
-            trap.get(GLTFShape).addClip(spikeUp);
-            trap.get(GLTFShape).addClip(despawn);
-            var leftLever = new Entity();
-            leftLever.set(new Transform());
-            leftLever.get(Transform).position.set(-1.5, 0, 0);
-            leftLever.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0);
-            leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"));
-            leftLever.get(GLTFShape).addClip(leverOff);
-            leftLever.get(GLTFShape).addClip(leverOn);
-            leftLever.get(GLTFShape).addClip(LeverDespawn);
-            leftLever.setParent(trap);
-            leftLever.set(new OnClick(function (e) {
-                operateLeftLever(leftLever);
-            }));
-            var rightLever = new Entity();
-            rightLever.set(new Transform());
-            rightLever.get(Transform).position.set(1.5, 0, 0);
-            rightLever.get(Transform).rotation.eulerAngles = new Vector3(0, 90, 0);
-            rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"));
-            rightLever.get(GLTFShape).addClip(leverOff);
-            rightLever.get(GLTFShape).addClip(leverOn);
-            rightLever.get(GLTFShape).addClip(LeverDespawn);
-            rightLever.setParent(trap);
-            rightLever.set(new OnClick(function (e) {
-                operateRightLever(rightLever);
-            }));
-            engine.addEntity(trap);
-            engine.addEntity(leftLever);
-            engine.addEntity(rightLever);
-            log("placed a trap in" + pos);
-        };
         for (var i = 0; i < trapAmount; i++) {
-            _loop_3(i);
+            trapSpawner.spawnTrap();
         }
     }
+    var trapSpawner = {
+        trapPool: [],
+        getEntityFromPool: function () {
+            for (var i = 0; i < trapSpawner.trapPool.length; i++) {
+                if (!trapSpawner.trapPool[i].alive) {
+                    return trapSpawner.trapPool[i];
+                }
+            }
+            var instance = new Entity();
+            trapSpawner.trapPool.push(instance);
+            return instance;
+        },
+        spawnTrap: function () {
+            var trap = trapSpawner.getEntityFromPool();
+            engine.addEntity(trap);
+            var leftLever = trapSpawner.getEntityFromPool();
+            engine.addEntity(leftLever);
+            var rightLever = trapSpawner.getEntityFromPool();
+            engine.addEntity(rightLever);
+            var pos = randomTrapPosition();
+            var t = trap.getOrCreate(Transform);
+            t.position.set(pos.x, 0.11, pos.y);
+            t.scale.setAll(0.5);
+            var d = trap.getOrCreate(TrapData);
+            d.gridPos = pos;
+            if (!trap.has(GLTFShape)) {
+                trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"));
+                var clipWalk = new AnimationClip("Walking", { loop: true });
+                var clipDie = new AnimationClip("Dying", { loop: false });
+                trap.get(GLTFShape).addClip(spikeUp);
+                trap.get(GLTFShape).addClip(despawn);
+            }
+            var lt = leftLever.getOrCreate(Transform);
+            lt.position.set(-1.5, 0, 0);
+            lt.rotation.eulerAngles = new Vector3(0, 90, 0);
+            if (!leftLever.has(GLTFShape)) {
+                leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"));
+                leftLever.get(GLTFShape).addClip(leverOff);
+                leftLever.get(GLTFShape).addClip(leverOn);
+                leftLever.get(GLTFShape).addClip(LeverDespawn);
+            }
+            leftLever.setParent(trap);
+            if (!leftLever.has(OnClick)) {
+                leftLever.set(new OnClick(function (e) {
+                    operateLeftLever(leftLever);
+                }));
+            }
+            var rt = rightLever.getOrCreate(Transform);
+            rt.position.set(1.5, 0, 0);
+            rt.rotation.eulerAngles = new Vector3(0, 90, 0);
+            if (!rightLever.has(GLTFShape)) {
+                rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"));
+                rightLever.get(GLTFShape).addClip(leverOff);
+                rightLever.get(GLTFShape).addClip(leverOn);
+                rightLever.get(GLTFShape).addClip(LeverDespawn);
+            }
+            rightLever.setParent(trap);
+            if (!rightLever.has(OnClick)) {
+                rightLever.set(new OnClick(function (e) {
+                    operateLeftLever(rightLever);
+                }));
+            }
+            log("placed a trap in" + pos);
+        }
+    };
     function operateLeftLever(lever) {
         var data = lever.getParent().get(TrapData);
         if (data.leftLever) {
@@ -441,7 +467,7 @@ define("game", ["require", "exports"], function (require, exports) {
     }
     function randomTrapPosition() {
         var counter = 0;
-        var _loop_4 = function () {
+        var _loop_3 = function () {
             if (counter++ > 1000) {
                 throw new Error("Invalid trap position, try again");
             }
@@ -459,7 +485,7 @@ define("game", ["require", "exports"], function (require, exports) {
             }
         };
         while (true) {
-            var state_1 = _loop_4();
+            var state_1 = _loop_3();
             if (typeof state_1 === "object")
                 return state_1.value;
         }
