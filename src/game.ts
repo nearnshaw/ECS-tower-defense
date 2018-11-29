@@ -393,7 +393,7 @@ function placeTraps(){
 
     let trap = new Entity()
     trap.set(new Transform())
-    trap.get(Transform).position.set(pos.x, 0, pos.y)
+    trap.get(Transform).position.set(pos.x, 0.11, pos.y)
     trap.get(Transform).scale.setAll(0.5)
     trap.set(new TrapData(pos))
     trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
@@ -431,6 +431,7 @@ function placeTraps(){
     engine.addEntity(trap)
     engine.addEntity(leftLever)
     engine.addEntity(rightLever)
+    log("placed a trap in" + pos)
   }
 }
 
@@ -473,18 +474,18 @@ function randomTrapPosition()
     {
       if(counter++ > 1000)
       {
-        throw new Error("Invalid path, try again");
+        throw new Error("Invalid trap position, try again");
       }
       let path = gameData.path
       const posIndex = Math.floor(Math.random() * path.length)
       const position = gameData.path[posIndex]
-      if( path.filter((p) => p.x == position.x - 1 && p.y == position.y).length > 0
-        && path.filter((p) => p.x == position.x + 1 && p.y == position.y).length > 0
+      if( path.filter((p) => p.x == position.x - 1 && p.y == position.y).length == 0
+        && path.filter((p) => p.x == position.x + 1 && p.y == position.y).length == 0
         && position.y > 2
         && position.y < 18
         && position.x > 2
         && position.x < 18
-        && traps.entities.filter((t) => JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos)).length > 0
+        && traps.entities.filter((t) => JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos)).length == 0
       )
       {
         return position 
