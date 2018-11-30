@@ -111,19 +111,28 @@ export class moveBlobs {
         
           transform.position.set(pos2d.x, 0.25, pos2d.y)
           creepData.lerpFraction += 1 / 60
-      } else {
-        creepData.pathPos += 1
+      } 
+      else {
+        if (creepData.pathPos > path.length - 1){
+          gameData.creepScore += 1
+          log("LOOOSE"+ gameData.creepScore)
+          engine.removeEntity(creep)
+        } 
+        else {
+          creepData.pathPos += 1
         
-        //path.previousPos = path.target
-        //path.target = myPath.path[path.nextPathIndex]
-        creepData.lerpFraction = 0
-        //transform.lookAt(path.target)  
-  
-        //rotate.previousRot = transform.rotation
-        //rotate.targetRot = fromToRotation(transform.position, path.target)
-        //rotate.rotateFraction = 0
-        let nextPos = new Vector3(path[creepData.pathPos + 1].x , 0.25, path[creepData.pathPos + 1].y)
-        transform.lookAt(nextPos)
+          //path.previousPos = path.target
+          //path.target = myPath.path[path.nextPathIndex]
+          creepData.lerpFraction = 0
+          //transform.lookAt(path.target)  
+    
+          //rotate.previousRot = transform.rotation
+          //rotate.targetRot = fromToRotation(transform.position, path.target)
+          //rotate.rotateFraction = 0
+          let nextPos = new Vector3(path[creepData.pathPos + 1].x , 0.25, path[creepData.pathPos + 1].y)
+          transform.lookAt(nextPos)
+        }
+       
       }
 
     }  
@@ -180,25 +189,10 @@ engine.addEntity(ground)
 
 
 
-const leverOff = new AnimationClip("LeverOff", {loop: false})
-const leverOn= new AnimationClip("LeverOn", {loop: false})
-const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
-const spikeUp = new AnimationClip("SpikeUp", {loop: false})
-const despawn= new AnimationClip("Despawn", {loop: false})
-
-
-
-
-
 ///////////////////////////////////
 // Functions
 
 function newGame(){
-  for(let creep of creeps.entities)
-  {
-    creep.get(CreepData).isDead = true;
-    //engine.removeEntity(creep)
-  }
 
   gameData.humanScore = 0
   gameData.creepScore = 0
@@ -207,8 +201,20 @@ function newGame(){
   gameData.creepInterval = 3
 
   // get rid of old path
-  for (let i = 0; i < tileSpawner.tilePool.length; i++) {
-    engine.removeEntity(tileSpawner.tilePool[i])
+  //for (let i = 0; i < tileSpawner.tilePool.length; i++) {
+  for(let tile of tiles.entities){
+
+     engine.removeEntity(tile)
+  }
+
+  // get rid of old creeps
+  for(let creep of creeps.entities){
+    creep.get(CreepData).isDead = true;
+    engine.removeEntity(creep)
+  }
+
+  for(let trap of traps.entities){
+    engine.removeEntity(trap)
   }
 
   // create random path
@@ -244,6 +250,7 @@ const creepSpawner = {
   getEntityFromPool(): Entity | null {
     for (let i = 0; i < creepSpawner.creepPool.length; i++) {
       if (!creepSpawner.creepPool[i].alive) {
+        debugger
         return creepSpawner.creepPool[i]
       }
     }
@@ -389,6 +396,9 @@ const tileSpawner = {
     t.position.set(pos.x, 0.1, pos.y)
     t.rotation.setEuler(90, 0, 0)
 
+    let p = ent.getOrCreate(TilePos)
+    p.gridPos = pos
+
     ent.set(new PlaneShape)
     ent.set(floorMaterial)
 
@@ -440,8 +450,8 @@ const trapSpawner = {
 
     if (!trap.has(GLTFShape)){
       trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
-      const clipWalk = new AnimationClip("Walking", {loop: true})
-      const clipDie= new AnimationClip("Dying", {loop: false})
+      const spikeUp = new AnimationClip("SpikeUp", {loop: false})
+      const despawn= new AnimationClip("Despawn", {loop: false})
       trap.get(GLTFShape).addClip(spikeUp)
       trap.get(GLTFShape).addClip(despawn)
     }
@@ -452,6 +462,9 @@ const trapSpawner = {
 
     if (!leftLever.has(GLTFShape)){
       leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
+      const leverOff = new AnimationClip("LeverOff", {loop: false})
+      const leverOn= new AnimationClip("LeverOn", {loop: false})
+      const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
       leftLever.get(GLTFShape).addClip(leverOff)
       leftLever.get(GLTFShape).addClip(leverOn)
       leftLever.get(GLTFShape).addClip(LeverDespawn)
@@ -471,6 +484,9 @@ const trapSpawner = {
 
     if (!rightLever.has(GLTFShape)){
       rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
+      const leverOff = new AnimationClip("LeverOff", {loop: false})
+      const leverOn= new AnimationClip("LeverOn", {loop: false})
+      const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
       rightLever.get(GLTFShape).addClip(leverOff)
       rightLever.get(GLTFShape).addClip(leverOn)
       rightLever.get(GLTFShape).addClip(LeverDespawn)

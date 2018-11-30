@@ -127,16 +127,23 @@ define("game", ["require", "exports"], function (require, exports) {
                         creepData.lerpFraction += 1 / 60;
                     }
                     else {
-                        creepData.pathPos += 1;
-                        //path.previousPos = path.target
-                        //path.target = myPath.path[path.nextPathIndex]
-                        creepData.lerpFraction = 0;
-                        //transform.lookAt(path.target)  
-                        //rotate.previousRot = transform.rotation
-                        //rotate.targetRot = fromToRotation(transform.position, path.target)
-                        //rotate.rotateFraction = 0
-                        var nextPos = new Vector3(path[creepData.pathPos + 1].x, 0.25, path[creepData.pathPos + 1].y);
-                        transform.lookAt(nextPos);
+                        if (creepData.pathPos > path.length - 1) {
+                            gameData.creepScore += 1;
+                            log("LOOOSE" + gameData.creepScore);
+                            engine.removeEntity(creep);
+                        }
+                        else {
+                            creepData.pathPos += 1;
+                            //path.previousPos = path.target
+                            //path.target = myPath.path[path.nextPathIndex]
+                            creepData.lerpFraction = 0;
+                            //transform.lookAt(path.target)  
+                            //rotate.previousRot = transform.rotation
+                            //rotate.targetRot = fromToRotation(transform.position, path.target)
+                            //rotate.rotateFraction = 0
+                            var nextPos = new Vector3(path[creepData.pathPos + 1].x, 0.25, path[creepData.pathPos + 1].y);
+                            transform.lookAt(nextPos);
+                        }
                     }
                 }
             }
@@ -185,37 +192,57 @@ define("game", ["require", "exports"], function (require, exports) {
     ground.set(new PlaneShape);
     ground.set(groundMaterial);
     engine.addEntity(ground);
-    var leverOff = new AnimationClip("LeverOff", { loop: false });
-    var leverOn = new AnimationClip("LeverOn", { loop: false });
-    var LeverDespawn = new AnimationClip("LeverDeSpawn", { loop: false });
-    var spikeUp = new AnimationClip("SpikeUp", { loop: false });
-    var despawn = new AnimationClip("Despawn", { loop: false });
     ///////////////////////////////////
     // Functions
     function newGame() {
-        var e_2, _a;
-        try {
-            for (var _b = __values(creeps.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var creep = _c.value;
-                creep.get(CreepData).isDead = true;
-                //engine.removeEntity(creep)
-            }
-        }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
-        finally {
-            try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-            }
-            finally { if (e_2) throw e_2.error; }
-        }
+        var e_2, _a, e_3, _b, e_4, _c;
         gameData.humanScore = 0;
         gameData.creepScore = 0;
         gameData.lost = false;
         gameData.won = false;
         gameData.creepInterval = 3;
-        // get rid of old path
-        for (var i = 0; i < tileSpawner.tilePool.length; i++) {
-            engine.removeEntity(tileSpawner.tilePool[i]);
+        try {
+            // get rid of old path
+            //for (let i = 0; i < tileSpawner.tilePool.length; i++) {
+            for (var _d = __values(tiles.entities), _e = _d.next(); !_e.done; _e = _d.next()) {
+                var tile = _e.value;
+                engine.removeEntity(tile);
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
+            }
+            finally { if (e_2) throw e_2.error; }
+        }
+        try {
+            // get rid of old creeps
+            for (var _f = __values(creeps.entities), _g = _f.next(); !_g.done; _g = _f.next()) {
+                var creep = _g.value;
+                creep.get(CreepData).isDead = true;
+                engine.removeEntity(creep);
+            }
+        }
+        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        finally {
+            try {
+                if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
+            }
+            finally { if (e_3) throw e_3.error; }
+        }
+        try {
+            for (var _h = __values(traps.entities), _j = _h.next(); !_j.done; _j = _h.next()) {
+                var trap = _j.value;
+                engine.removeEntity(trap);
+            }
+        }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        finally {
+            try {
+                if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
+            }
+            finally { if (e_4) throw e_4.error; }
         }
         // create random path
         gameData.path = generatePath();
@@ -241,6 +268,7 @@ define("game", ["require", "exports"], function (require, exports) {
         getEntityFromPool: function () {
             for (var i = 0; i < creepSpawner.creepPool.length; i++) {
                 if (!creepSpawner.creepPool[i].alive) {
+                    debugger;
                     return creepSpawner.creepPool[i];
                 }
             }
@@ -324,7 +352,7 @@ define("game", ["require", "exports"], function (require, exports) {
             && (position.x > 1 || position.y > 1);
     }
     function getNeighborCount(path, position) {
-        var e_3, _a;
+        var e_5, _a;
         var neighbors = [
             { x: position.x + 1, y: position.y },
             { x: position.x - 1, y: position.y },
@@ -343,12 +371,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 _loop_2(neighbor);
             }
         }
-        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
         finally {
             try {
                 if (neighbors_1_1 && !neighbors_1_1.done && (_a = neighbors_1.return)) _a.call(neighbors_1);
             }
-            finally { if (e_3) throw e_3.error; }
+            finally { if (e_5) throw e_5.error; }
         }
         return count;
     }
@@ -370,6 +398,8 @@ define("game", ["require", "exports"], function (require, exports) {
             var t = ent.getOrCreate(Transform);
             t.position.set(pos.x, 0.1, pos.y);
             t.rotation.setEuler(90, 0, 0);
+            var p = ent.getOrCreate(TilePos);
+            p.gridPos = pos;
             ent.set(new PlaneShape);
             ent.set(floorMaterial);
             engine.addEntity(ent);
@@ -408,8 +438,8 @@ define("game", ["require", "exports"], function (require, exports) {
             d.gridPos = pos;
             if (!trap.has(GLTFShape)) {
                 trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"));
-                var clipWalk = new AnimationClip("Walking", { loop: true });
-                var clipDie = new AnimationClip("Dying", { loop: false });
+                var spikeUp = new AnimationClip("SpikeUp", { loop: false });
+                var despawn = new AnimationClip("Despawn", { loop: false });
                 trap.get(GLTFShape).addClip(spikeUp);
                 trap.get(GLTFShape).addClip(despawn);
             }
@@ -418,6 +448,9 @@ define("game", ["require", "exports"], function (require, exports) {
             lt.rotation.eulerAngles = new Vector3(0, 90, 0);
             if (!leftLever.has(GLTFShape)) {
                 leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"));
+                var leverOff = new AnimationClip("LeverOff", { loop: false });
+                var leverOn = new AnimationClip("LeverOn", { loop: false });
+                var LeverDespawn = new AnimationClip("LeverDeSpawn", { loop: false });
                 leftLever.get(GLTFShape).addClip(leverOff);
                 leftLever.get(GLTFShape).addClip(leverOn);
                 leftLever.get(GLTFShape).addClip(LeverDespawn);
@@ -433,6 +466,9 @@ define("game", ["require", "exports"], function (require, exports) {
             rt.rotation.eulerAngles = new Vector3(0, 90, 0);
             if (!rightLever.has(GLTFShape)) {
                 rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"));
+                var leverOff = new AnimationClip("LeverOff", { loop: false });
+                var leverOn = new AnimationClip("LeverOn", { loop: false });
+                var LeverDespawn = new AnimationClip("LeverDeSpawn", { loop: false });
                 rightLever.get(GLTFShape).addClip(leverOff);
                 rightLever.get(GLTFShape).addClip(leverOn);
                 rightLever.get(GLTFShape).addClip(LeverDespawn);
