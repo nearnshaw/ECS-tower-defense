@@ -33,6 +33,7 @@ define("game", ["require", "exports"], function (require, exports) {
     var Pool = /** @class */ (function () {
         function Pool() {
             this.pool = [];
+            this.max = 1000;
         }
         Pool.prototype.getEntity = function () {
             for (var i = 0; i < this.pool.length; i++) {
@@ -41,7 +42,12 @@ define("game", ["require", "exports"], function (require, exports) {
                     return entity;
                 }
             }
-            return this.newEntity();
+            if (this.pool.length < this.max) {
+                return this.newEntity();
+            }
+            else {
+                return null;
+            }
         };
         Pool.prototype.newEntity = function () {
             var instance = new Entity();
@@ -50,7 +56,7 @@ define("game", ["require", "exports"], function (require, exports) {
         };
         return Pool;
     }());
-    var trapAmount = 2;
+    var MAX_TRAPS = 2;
     var MAX_CREEPS = 8;
     ////////////////////////////////////
     // Custom components
@@ -279,6 +285,8 @@ define("game", ["require", "exports"], function (require, exports) {
     var tilePool = new Pool();
     var creepPool = new Pool();
     var trapPool = new Pool();
+    creepPool.max = MAX_CREEPS;
+    trapPool.max = MAX_TRAPS * 3;
     function spawnTrap() {
         var trap = trapPool.getEntity();
         engine.addEntity(trap);
@@ -368,46 +376,6 @@ define("game", ["require", "exports"], function (require, exports) {
         }
         engine.addEntity(ent);
     }
-    // const creepSpawner = {
-    //   creepPool: [] as Entity[],
-    //   getEntityFromPool(): Entity | null {
-    //     for (let i = 0; i < creepSpawner.creepPool.length; i++) {
-    //       if (!creepSpawner.creepPool[i].alive) {
-    //         debugger
-    //         return creepSpawner.creepPool[i]
-    //       }
-    //     }
-    //     if (creepSpawner.creepPool.length < MAX_CREEPS){
-    //       const instance = new Entity()
-    //       creepSpawner.creepPool.push(instance)
-    //       return instance
-    //     } 
-    //     else {
-    //       return null
-    //     }
-    //   },
-    //   spawnCreep() {
-    //     const ent = creepSpawner.getEntityFromPool()
-    //     if (!ent) return
-    //     let t = ent.getOrCreate(Transform)
-    //     t.position.set(10, 0.25, 1)
-    //     //t.rotation.setEuler(90, 0, 0)
-    //     let d = ent.getOrCreate(CreepData)
-    //     d.isDead = false
-    //     d.gridPos = gameData.path[0]
-    //     d.pathPos = 0
-    //     d.lerpFraction = 0
-    //     if (!ent.has(GLTFShape)){
-    //       ent.set(new GLTFShape("models/BlobMonster/BlobMonster.gltf"))
-    //       const clipWalk = new AnimationClip("Walking", {loop: true})
-    //       const clipDie= new AnimationClip("Dying", {loop: false})
-    //       ent.get(GLTFShape).addClip(clipWalk)
-    //       ent.get(GLTFShape).addClip(clipDie)
-    //       clipWalk.play()
-    //     }
-    //     engine.addEntity(ent)
-    //   }
-    // }
     function generatePath() {
         var path = [];
         var position = new Vector2(10, 1);
@@ -484,108 +452,11 @@ define("game", ["require", "exports"], function (require, exports) {
         }
         return count;
     }
-    // TILE spawner
-    // const tileSpawner = {
-    //   tilePool: [] as Entity[],
-    //   getEntityFromPool(): Entity | null {
-    //     for (let i = 0; i < tileSpawner.tilePool.length; i++) {
-    //       if (!tileSpawner.tilePool[i].alive) {
-    //         return tileSpawner.tilePool[i]
-    //       }
-    //     }
-    //     const instance = new Entity()
-    //     tileSpawner.tilePool.push(instance)
-    //     return instance
-    //   },
-    //   spawnTile(pos: Vector2) {
-    //     const ent = tileSpawner.getEntityFromPool()
-    //     let t = ent.getOrCreate(Transform)
-    //     t.position.set(pos.x, 0.1, pos.y)
-    //     t.rotation.setEuler(90, 0, 0)
-    //     let p = ent.getOrCreate(TilePos)
-    //     p.gridPos = pos
-    //     ent.set(new PlaneShape)
-    //     ent.set(floorMaterial)
-    //     engine.addEntity(ent)
-    //   }
-    // }
-    // TRAP spawner
     function placeTraps() {
-        for (var i = 0; i < trapAmount; i++) {
+        for (var i = 0; i < MAX_TRAPS; i++) {
             spawnTrap();
         }
     }
-    // const trapSpawner = {
-    //   trapPool: [] as Entity[],
-    //   getEntityFromPool(): Entity | null {
-    //     for (let i = 0; i < trapSpawner.trapPool.length; i++) {
-    //       if (!trapSpawner.trapPool[i].alive) {
-    //         return trapSpawner.trapPool[i]
-    //       }
-    //     }
-    //     const instance = new Entity()
-    //     trapSpawner.trapPool.push(instance)
-    //     return instance
-    //   },
-    //   spawnTrap() {
-    //     const trap = trapSpawner.getEntityFromPool()
-    //     engine.addEntity(trap) 
-    //     const leftLever = trapSpawner.getEntityFromPool()
-    //     engine.addEntity(leftLever)
-    //     const rightLever = trapSpawner.getEntityFromPool()
-    //     engine.addEntity(rightLever)
-    //     let pos = randomTrapPosition()
-    //     let t = trap.getOrCreate(Transform)
-    //     t.position.set(pos.x, 0.11, pos.y)
-    //     t.scale.setAll(0.5)
-    //     let d = trap.getOrCreate(TrapData)
-    //     d.gridPos = pos
-    //     if (!trap.has(GLTFShape)){
-    //       trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
-    //       const spikeUp = new AnimationClip("SpikeUp", {loop: false})
-    //       const despawn= new AnimationClip("Despawn", {loop: false})
-    //       trap.get(GLTFShape).addClip(spikeUp)
-    //       trap.get(GLTFShape).addClip(despawn)
-    //     }
-    //     let lt = leftLever.getOrCreate(Transform)
-    //     lt.position.set(-1.5, 0, 0)
-    //     lt.rotation.eulerAngles = new Vector3(0, 90, 0)
-    //     if (!leftLever.has(GLTFShape)){
-    //       leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
-    //       const leverOff = new AnimationClip("LeverOff", {loop: false})
-    //       const leverOn= new AnimationClip("LeverOn", {loop: false})
-    //       const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
-    //       leftLever.get(GLTFShape).addClip(leverOff)
-    //       leftLever.get(GLTFShape).addClip(leverOn)
-    //       leftLever.get(GLTFShape).addClip(LeverDespawn)
-    //     }
-    //     leftLever.setParent(trap)
-    //     if (!leftLever.has(OnClick)){
-    //       leftLever.set(new OnClick(e => {
-    //         operateLeftLever(leftLever)
-    //       }))
-    //     }
-    //     let rt = rightLever.getOrCreate(Transform)
-    //     rt.position.set(1.5, 0, 0)
-    //     rt.rotation.eulerAngles = new Vector3(0, 90, 0)
-    //     if (!rightLever.has(GLTFShape)){
-    //       rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
-    //       const leverOff = new AnimationClip("LeverOff", {loop: false})
-    //       const leverOn= new AnimationClip("LeverOn", {loop: false})
-    //       const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
-    //       rightLever.get(GLTFShape).addClip(leverOff)
-    //       rightLever.get(GLTFShape).addClip(leverOn)
-    //       rightLever.get(GLTFShape).addClip(LeverDespawn)
-    //     }
-    //     rightLever.setParent(trap)
-    //     if (!rightLever.has(OnClick)){
-    //       rightLever.set(new OnClick(e => {
-    //         operateLeftLever(rightLever)
-    //       }))
-    //     }
-    //     log("placed a trap in" + pos)
-    //   }
-    // }
     function operateLeftLever(lever) {
         var data = lever.getParent().get(TrapData);
         if (data.leftLever) {
