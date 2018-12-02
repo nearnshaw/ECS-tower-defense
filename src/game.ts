@@ -99,8 +99,8 @@ export class GameData {
   path: Vector2[]
   creeps: Entity[]
   traps: Entity[]
-  humanScore: number
-  creepScore: number
+  humanScore: number = 0
+  creepScore: number = 0
   creepInterval: number
 }
 
@@ -140,7 +140,8 @@ export class moveBlobs {
         log(creepData.pathPos)
         if (creepData.pathPos >= path.length - 2){
           gameData.creepScore += 1
-          log("LOOOSE"+ gameData.creepScore)
+          log("LOOOSE "+ gameData.creepScore)
+          scoreTextCreeps.get(TextShape).data = gameData.creepScore.toString()
           engine.removeEntity(creep)
         } 
         else {
@@ -173,7 +174,7 @@ game.set(gameData)
 const button = new Entity()
 button.set(new Transform())
 button.set(new BoxShape())
-button.get(Transform).position.set(18.65, 0.7, 18.75)
+button.get(Transform).position.set(16.65, 0.7, 18.75)
 let buttonData = new ButtonData()
 button.set(buttonData)
 buttonData.label = "New Game"
@@ -207,8 +208,51 @@ ground.set(groundMaterial)
 engine.addEntity(ground)
 
 
+let scoreBoard = new Entity()
+scoreBoard.set(new GLTFShape("models/ScoreRock/ScoreRock.gltf"))
+scoreBoard.set(new Transform())
+scoreBoard.get(Transform).position.set(18.99, 0, 19)
+engine.addEntity(scoreBoard)
 
+let scoreText1 = new Entity()
+scoreText1.setParent(scoreBoard)
+scoreText1.set(new TextShape("humans"))
+scoreText1.get(TextShape).fontSize = 50
+scoreText1.set(new Transform())
+scoreText1.get(Transform).position.set(-.4, .1, -.38)
+engine.addEntity(scoreText1)
 
+let scoreText2 = new Entity()
+scoreText2.setParent(scoreBoard)
+scoreText2.set(new TextShape("creps"))
+scoreText2.get(TextShape).fontSize = 50
+scoreText2.set(new Transform())
+scoreText2.get(Transform).position.set(.4, .1, -.38)
+engine.addEntity(scoreText2)
+
+let scoreText3 = new Entity()
+scoreText3.setParent(scoreBoard)
+scoreText3.set(new TextShape("vs"))
+scoreText3.get(TextShape).fontSize = 100
+scoreText3.set(new Transform())
+scoreText3.get(Transform).position.set(0, .35, -.38)
+engine.addEntity(scoreText3)
+
+let scoreTextHumans = new Entity()
+scoreTextHumans.setParent(scoreBoard)
+scoreTextHumans.set(new TextShape(gameData.humanScore.toString()))
+scoreTextHumans.get(TextShape).fontSize = 200
+scoreTextHumans.set(new Transform())
+scoreTextHumans.get(Transform).position.set(-.4, .35, -.38)
+engine.addEntity(scoreTextHumans)
+
+let scoreTextCreeps = new Entity()
+scoreTextCreeps.setParent(scoreBoard)
+scoreTextCreeps.set(new TextShape(gameData.creepScore.toString()))
+scoreTextCreeps.get(TextShape).fontSize = 200
+scoreTextCreeps.set(new Transform())
+scoreTextCreeps.get(Transform).position.set(.4, .35, -.38)
+engine.addEntity(scoreTextCreeps)
 
 ///////////////////////////////////
 // Functions
@@ -353,9 +397,9 @@ function spawnTile(pos: Vector2) {
 }
 
 function spawnCreep(){
-  log("new creep")
   let ent = creepPool.getEntity()
   if (!ent) return
+  log("new creep")
 
   let t = ent.getOrCreate(Transform)
   t.position.set(10, 0.25, 1)
