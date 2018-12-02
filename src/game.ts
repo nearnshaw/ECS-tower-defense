@@ -141,7 +141,7 @@ export class moveBlobs {
         if (creepData.pathPos >= path.length - 2){
           gameData.creepScore += 1
           log("LOOOSE "+ gameData.creepScore)
-          scoreTextCreeps.get(TextShape).data = gameData.creepScore.toString()
+          scoreTextCreeps.get(TextShape).value = gameData.creepScore.toString()
           engine.removeEntity(creep)
         } 
         else {
@@ -162,6 +162,31 @@ export class moveBlobs {
 }
 
 engine.addSystem(new moveBlobs())
+
+
+export class killBlobs {
+  update() {
+    for (let trap of traps.entities){
+      let trapData = trap.get(TrapData)
+      if (trapData.trapState == TrapState.Fired){
+        for( let creep of creeps.entities){
+        
+          let creepData = creep.get(CreepData)
+          if( trapData.gridPos == creepData.gridPos
+            && creepData.isDead == false){
+              creepData.isDead = true
+              engine.removeEntity(creep)
+              scoreTextHumans.get(TextShape).value = gameData.humanScore.toString()
+            }
+          
+        }
+      }
+      
+    }    
+  }
+}
+
+engine.addSystem(new killBlobs())
 
 //////////////////////////////////////////
 // Add entities

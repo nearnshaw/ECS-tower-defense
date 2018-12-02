@@ -159,7 +159,7 @@ define("game", ["require", "exports"], function (require, exports) {
                         if (creepData.pathPos >= path.length - 2) {
                             gameData.creepScore += 1;
                             log("LOOOSE " + gameData.creepScore);
-                            scoreTextCreeps.get(TextShape).data = gameData.creepScore.toString();
+                            scoreTextCreeps.get(TextShape).value = gameData.creepScore.toString();
                             engine.removeEntity(creep);
                         }
                         else {
@@ -186,6 +186,50 @@ define("game", ["require", "exports"], function (require, exports) {
     }());
     exports.moveBlobs = moveBlobs;
     engine.addSystem(new moveBlobs());
+    var killBlobs = /** @class */ (function () {
+        function killBlobs() {
+        }
+        killBlobs.prototype.update = function () {
+            var e_2, _a, e_3, _b;
+            try {
+                for (var _c = __values(traps.entities), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    var trap = _d.value;
+                    var trapData = trap.get(TrapData);
+                    if (trapData.trapState == 3 /* Fired */) {
+                        try {
+                            for (var _e = __values(creeps.entities), _f = _e.next(); !_f.done; _f = _e.next()) {
+                                var creep = _f.value;
+                                var creepData = creep.get(CreepData);
+                                if (trapData.gridPos == creepData.gridPos
+                                    && creepData.isDead == false) {
+                                    creepData.isDead = true;
+                                    engine.removeEntity(creep);
+                                    scoreTextHumans.get(TextShape).value = gameData.humanScore.toString();
+                                }
+                            }
+                        }
+                        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+                        finally {
+                            try {
+                                if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
+                            }
+                            finally { if (e_3) throw e_3.error; }
+                        }
+                    }
+                }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
+                }
+                finally { if (e_2) throw e_2.error; }
+            }
+        };
+        return killBlobs;
+    }());
+    exports.killBlobs = killBlobs;
+    engine.addSystem(new killBlobs());
     //////////////////////////////////////////
     // Add entities
     var game = new Entity();
@@ -262,7 +306,7 @@ define("game", ["require", "exports"], function (require, exports) {
     ///////////////////////////////////
     // Functions
     function newGame() {
-        var e_2, _a, e_3, _b, e_4, _c;
+        var e_4, _a, e_5, _b, e_6, _c;
         gameData.humanScore = 0;
         gameData.creepScore = 0;
         gameData.lost = false;
@@ -276,12 +320,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 engine.removeEntity(tile);
             }
         }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_2) throw e_2.error; }
+            finally { if (e_4) throw e_4.error; }
         }
         try {
             // get rid of old creeps
@@ -291,12 +335,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 engine.removeEntity(creep);
             }
         }
-        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
         finally {
             try {
                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
             }
-            finally { if (e_3) throw e_3.error; }
+            finally { if (e_5) throw e_5.error; }
         }
         try {
             for (var _h = __values(traps.entities), _j = _h.next(); !_j.done; _j = _h.next()) {
@@ -304,12 +348,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 engine.removeEntity(trap);
             }
         }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        catch (e_6_1) { e_6 = { error: e_6_1 }; }
         finally {
             try {
                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
             }
-            finally { if (e_4) throw e_4.error; }
+            finally { if (e_6) throw e_6.error; }
         }
         // create random path
         gameData.path = generatePath();
@@ -465,7 +509,7 @@ define("game", ["require", "exports"], function (require, exports) {
             && (position.x > 1 || position.y > 1);
     }
     function getNeighborCount(path, position) {
-        var e_5, _a;
+        var e_7, _a;
         var neighbors = [
             { x: position.x + 1, y: position.y },
             { x: position.x - 1, y: position.y },
@@ -484,12 +528,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 _loop_2(neighbor);
             }
         }
-        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
                 if (neighbors_1_1 && !neighbors_1_1.done && (_a = neighbors_1.return)) _a.call(neighbors_1);
             }
-            finally { if (e_5) throw e_5.error; }
+            finally { if (e_7) throw e_7.error; }
         }
         return count;
     }
