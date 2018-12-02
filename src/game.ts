@@ -137,7 +137,6 @@ export class moveBlobs {
           creepData.lerpFraction += 1 / 60
       } 
       else {
-        log(creepData.pathPos)
         if (creepData.pathPos >= path.length - 2){
           gameData.creepScore += 1
           log("LOOOSE "+ gameData.creepScore)
