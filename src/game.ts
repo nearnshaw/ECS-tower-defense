@@ -40,7 +40,7 @@ class Pool {
 }
 
 const MAX_TRAPS = 2
-const MAX_CREEPS = 8
+const MAX_CREEPS = 4
 
 ////////////////////////////////////
 // Custom components
@@ -137,18 +137,15 @@ export class moveBlobs {
           creepData.lerpFraction += 1 / 60
       } 
       else {
-        if (creepData.pathPos > path.length - 1){
+        log(creepData.pathPos)
+        if (creepData.pathPos >= path.length - 2){
           gameData.creepScore += 1
           log("LOOOSE"+ gameData.creepScore)
           engine.removeEntity(creep)
         } 
         else {
-          creepData.pathPos += 1
-        
-          //path.previousPos = path.target
-          //path.target = myPath.path[path.nextPathIndex]
+          creepData.pathPos += 1     
           creepData.lerpFraction = 0
-          //transform.lookAt(path.target)  
     
           //rotate.previousRot = transform.rotation
           //rotate.targetRot = fromToRotation(transform.position, path.target)
