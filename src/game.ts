@@ -174,6 +174,7 @@ export class killBlobs {
           let creepData = creep.get(CreepData)
           if( trapData.gridPos == creepData.gridPos
             && creepData.isDead == false){
+              log("KILL")
               creepData.isDead = true
               engine.removeEntity(creep)
               scoreTextHumans.get(TextShape).value = gameData.humanScore.toString()
