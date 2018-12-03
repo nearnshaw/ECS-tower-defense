@@ -46,6 +46,7 @@ define("game", ["require", "exports"], function (require, exports) {
         };
         Pool.prototype.newEntity = function () {
             var instance = new Entity();
+            instance.name = (Math.random() * 10000).toString();
             this.pool.push(instance);
             return instance;
         };
@@ -360,63 +361,32 @@ define("game", ["require", "exports"], function (require, exports) {
     ///////////////////////////////////
     // Functions
     function newGame() {
-        var e_5, _a, e_6, _b, e_7, _c;
         gameData.humanScore = 0;
         gameData.creepScore = 0;
         gameData.lost = false;
         gameData.won = false;
         gameData.creepInterval = 3;
-        try {
-            // get rid of old path
-            //for (let i = 0; i < tileSpawner.tilePool.length; i++) {
-            for (var _d = __values(tiles.entities), _e = _d.next(); !_e.done; _e = _d.next()) {
-                var tile = _e.value;
-                engine.removeEntity(tile);
-            }
+        // get rid of old path
+        while (tiles.entities.length) {
+            engine.removeEntity(tiles.entities[0]);
         }
-        catch (e_5_1) { e_5 = { error: e_5_1 }; }
-        finally {
-            try {
-                if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
-            }
-            finally { if (e_5) throw e_5.error; }
+        // get rid of old creeps
+        while (creeps.entities.length) {
+            creeps.entities[0].get(CreepData).isDead = true;
+            engine.removeEntity(creeps.entities[0]);
         }
-        try {
-            // get rid of old creeps
-            for (var _f = __values(creeps.entities), _g = _f.next(); !_g.done; _g = _f.next()) {
-                var creep = _g.value;
-                creep.get(CreepData).isDead = true;
-                engine.removeEntity(creep);
-            }
-        }
-        catch (e_6_1) { e_6 = { error: e_6_1 }; }
-        finally {
-            try {
-                if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
-            }
-            finally { if (e_6) throw e_6.error; }
-        }
-        try {
-            for (var _h = __values(traps.entities), _j = _h.next(); !_j.done; _j = _h.next()) {
-                var trap = _j.value;
-                engine.removeEntity(trap);
-            }
-        }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
-        finally {
-            try {
-                if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
-            }
-            finally { if (e_7) throw e_7.error; }
+        while (traps.entities.length) {
+            engine.removeEntity(traps.entities[0]);
         }
         // create random path
         gameData.path = generatePath();
-        log(gameData.path);
         // draw path with tiles
         for (var tile in gameData.path) {
             var pos = gameData.path[tile];
             spawnTile(pos);
         }
+        log('creating tiles');
+        log(tiles.entities.length);
         // add traps
         placeTraps();
     }
@@ -425,14 +395,10 @@ define("game", ["require", "exports"], function (require, exports) {
     var creepPool = new Pool();
     var trapPool = new Pool();
     creepPool.max = MAX_CREEPS;
-    trapPool.max = MAX_TRAPS * 3;
+    trapPool.max = MAX_TRAPS;
     function spawnTrap() {
         var trap = trapPool.getEntity();
         engine.addEntity(trap);
-        var leftLever = trapPool.getEntity();
-        engine.addEntity(leftLever);
-        var rightLever = trapPool.getEntity();
-        engine.addEntity(rightLever);
         var pos = randomTrapPosition();
         var t = trap.getOrCreate(Transform);
         t.position.set(pos.x, 0.11, pos.y);
@@ -444,43 +410,44 @@ define("game", ["require", "exports"], function (require, exports) {
         var despawn = new AnimationClip("Despawn", { loop: false });
         trap.get(GLTFShape).addClip(spikeUp);
         trap.get(GLTFShape).addClip(despawn);
-        var lt = leftLever.getOrCreate(Transform);
-        lt.position.set(-1.5, 0, 0);
-        lt.rotation.eulerAngles = new Vector3(0, 90, 0);
-        if (!leftLever.has(GLTFShape)) {
-            leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"));
-            var leverOff = new AnimationClip("LeverOff", { loop: false });
-            var leverOn = new AnimationClip("LeverOn", { loop: false });
-            var LeverDespawn = new AnimationClip("LeverDeSpawn", { loop: false });
-            leftLever.get(GLTFShape).addClip(leverOff);
-            leftLever.get(GLTFShape).addClip(leverOn);
-            leftLever.get(GLTFShape).addClip(LeverDespawn);
-        }
-        leftLever.setParent(trap);
-        if (!leftLever.has(OnClick)) {
-            leftLever.set(new OnClick(function (e) {
-                operateLeftLever(leftLever);
+        if (!trap.children) {
+            var leftLever_1 = new Entity();
+            engine.addEntity(leftLever_1);
+            var rightLever_1 = new Entity();
+            engine.addEntity(rightLever_1);
+            var lt = leftLever_1.getOrCreate(Transform);
+            lt.position.set(-1.5, 0, 0);
+            lt.rotation.eulerAngles = new Vector3(0, 90, 0);
+            leftLever_1.set(new GLTFShape("models/Lever/LeverBlue.gltf"));
+            var leverOffL = new AnimationClip("LeverOff", { loop: false });
+            var leverOnL = new AnimationClip("LeverOn", { loop: false });
+            var LeverDespawnL = new AnimationClip("LeverDeSpawn", { loop: false });
+            leftLever_1.get(GLTFShape).addClip(leverOffL);
+            leftLever_1.get(GLTFShape).addClip(leverOnL);
+            leftLever_1.get(GLTFShape).addClip(LeverDespawnL);
+            leftLever_1.setParent(trap);
+            //if (!leftLever.has(OnClick)){
+            leftLever_1.set(new OnClick(function (e) {
+                operateLeftLever(leftLever_1);
             }));
-        }
-        var rt = rightLever.getOrCreate(Transform);
-        rt.position.set(1.5, 0, 0);
-        rt.rotation.eulerAngles = new Vector3(0, 90, 0);
-        if (!rightLever.has(GLTFShape)) {
-            rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"));
-            var leverOff = new AnimationClip("LeverOff", { loop: false });
-            var leverOn = new AnimationClip("LeverOn", { loop: false });
-            var LeverDespawn = new AnimationClip("LeverDeSpawn", { loop: false });
-            rightLever.get(GLTFShape).addClip(leverOff);
-            rightLever.get(GLTFShape).addClip(leverOn);
-            rightLever.get(GLTFShape).addClip(LeverDespawn);
-        }
-        rightLever.setParent(trap);
-        if (!rightLever.has(OnClick)) {
-            rightLever.set(new OnClick(function (e) {
-                operateLeftLever(rightLever);
+            //}
+            var rt = rightLever_1.getOrCreate(Transform);
+            rt.position.set(1.5, 0, 0);
+            rt.rotation.eulerAngles = new Vector3(0, 90, 0);
+            rightLever_1.set(new GLTFShape("models/Lever/LeverRed.gltf"));
+            var leverOffR = new AnimationClip("LeverOff", { loop: false });
+            var leverOnR = new AnimationClip("LeverOn", { loop: false });
+            var LeverDespawnR = new AnimationClip("LeverDeSpawn", { loop: false });
+            rightLever_1.get(GLTFShape).addClip(leverOffR);
+            rightLever_1.get(GLTFShape).addClip(leverOnR);
+            rightLever_1.get(GLTFShape).addClip(LeverDespawnR);
+            rightLever_1.setParent(trap);
+            //if (!rightLever.has(OnClick)){
+            rightLever_1.set(new OnClick(function (e) {
+                operateLeftLever(rightLever_1);
             }));
+            //}
         }
-        log("placed a trap in" + pos);
     }
     function spawnTile(pos) {
         var ent = tilePool.getEntity();
@@ -563,7 +530,7 @@ define("game", ["require", "exports"], function (require, exports) {
             && (position.x > 1 || position.y > 1);
     }
     function getNeighborCount(path, position) {
-        var e_8, _a;
+        var e_5, _a;
         var neighbors = [
             { x: position.x + 1, y: position.y },
             { x: position.x - 1, y: position.y },
@@ -582,12 +549,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 _loop_2(neighbor);
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
         finally {
             try {
                 if (neighbors_1_1 && !neighbors_1_1.done && (_a = neighbors_1.return)) _a.call(neighbors_1);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_5) throw e_5.error; }
         }
         return count;
     }

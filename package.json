@@ -12,7 +12,7 @@
   "author": "",
   "license": "Not defined",
   "devDependencies": {
-    "decentraland-ecs": "next"
+    "decentraland-ecs": "^1.0.0-20181203170508.commit-cd20b29"
   },
   "dependencies": {}
 }

@@ -29,6 +29,7 @@ class Pool {
 
   newEntity() {
     const instance = new Entity()
+    instance.name = (Math.random() * 10000).toString()
     this.pool.push(instance)
     return instance
   }
@@ -335,31 +336,31 @@ function newGame(){
   gameData.creepInterval = 3
 
   // get rid of old path
-  //for (let i = 0; i < tileSpawner.tilePool.length; i++) {
-  for(let tile of tiles.entities){
-
-     engine.removeEntity(tile)
+  while(tiles.entities.length) {
+    engine.removeEntity(tiles.entities[0])
   }
-
+  
   // get rid of old creeps
-  for(let creep of creeps.entities){
-    creep.get(CreepData).isDead = true;
-    engine.removeEntity(creep)
+  while(creeps.entities.length) {
+    creeps.entities[0].get(CreepData).isDead = true;
+    engine.removeEntity(creeps.entities[0])
   }
 
-  for(let trap of traps.entities){
-    engine.removeEntity(trap)
+  while(traps.entities.length) {
+    engine.removeEntity(traps.entities[0])
   }
 
   // create random path
   gameData.path = generatePath()
-  log(gameData.path)
   
   // draw path with tiles
   for (let tile in gameData.path){
     let pos = gameData.path[tile]
     spawnTile(pos)
   }
+
+  log('creating tiles')
+  log(tiles.entities.length)
 
   // add traps
   placeTraps()
@@ -375,15 +376,11 @@ let tilePool = new Pool()
 let creepPool = new Pool()
 let trapPool = new Pool()
 creepPool.max = MAX_CREEPS
-trapPool.max = MAX_TRAPS * 3
+trapPool.max = MAX_TRAPS
 
 function spawnTrap(){
   const trap = trapPool.getEntity()
   engine.addEntity(trap) 
-  const leftLever = trapPool.getEntity()
-  engine.addEntity(leftLever)
-  const rightLever = trapPool.getEntity()
-  engine.addEntity(rightLever)
 
   let pos = randomTrapPosition()
 
@@ -400,52 +397,61 @@ function spawnTrap(){
   trap.get(GLTFShape).addClip(spikeUp)
   trap.get(GLTFShape).addClip(despawn)
   
+  if (!trap.children){
+    const leftLever = new Entity()
+    engine.addEntity(leftLever)
+    const rightLever = new Entity()
+    engine.addEntity(rightLever)   
 
-  let lt = leftLever.getOrCreate(Transform)
-  lt.position.set(-1.5, 0, 0)
-  lt.rotation.eulerAngles = new Vector3(0, 90, 0)
-
-  if (!leftLever.has(GLTFShape)){
+    let lt = leftLever.getOrCreate(Transform)
+    lt.position.set(-1.5, 0, 0)
+    lt.rotation.eulerAngles = new Vector3(0, 90, 0)
+  
+  
     leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
-    const leverOff = new AnimationClip("LeverOff", {loop: false})
-    const leverOn= new AnimationClip("LeverOn", {loop: false})
-    const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
-    leftLever.get(GLTFShape).addClip(leverOff)
-    leftLever.get(GLTFShape).addClip(leverOn)
-    leftLever.get(GLTFShape).addClip(LeverDespawn)
-  }
-
-  leftLever.setParent(trap)
+    const leverOffL = new AnimationClip("LeverOff", {loop: false})
+    const leverOnL= new AnimationClip("LeverOn", {loop: false})
+    const LeverDespawnL= new AnimationClip("LeverDeSpawn", {loop: false})
+    leftLever.get(GLTFShape).addClip(leverOffL)
+    leftLever.get(GLTFShape).addClip(leverOnL)
+    leftLever.get(GLTFShape).addClip(LeverDespawnL)
   
-  if (!leftLever.has(OnClick)){
-    leftLever.set(new OnClick(e => {
-      operateLeftLever(leftLever)
-    }))
-  }
-
-  let rt = rightLever.getOrCreate(Transform)
-  rt.position.set(1.5, 0, 0)
-  rt.rotation.eulerAngles = new Vector3(0, 90, 0)
-
-  if (!rightLever.has(GLTFShape)){
+  
+    leftLever.setParent(trap)
+    
+    //if (!leftLever.has(OnClick)){
+      leftLever.set(new OnClick(e => {
+        operateLeftLever(leftLever)
+      }))
+    //}
+  
+    let rt = rightLever.getOrCreate(Transform)
+    rt.position.set(1.5, 0, 0)
+    rt.rotation.eulerAngles = new Vector3(0, 90, 0)
+  
+    
     rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
-    const leverOff = new AnimationClip("LeverOff", {loop: false})
-    const leverOn= new AnimationClip("LeverOn", {loop: false})
-    const LeverDespawn= new AnimationClip("LeverDeSpawn", {loop: false})
-    rightLever.get(GLTFShape).addClip(leverOff)
-    rightLever.get(GLTFShape).addClip(leverOn)
-    rightLever.get(GLTFShape).addClip(LeverDespawn)
-  }
-
-  rightLever.setParent(trap)
+    const leverOffR = new AnimationClip("LeverOff", {loop: false})
+    const leverOnR= new AnimationClip("LeverOn", {loop: false})
+    const LeverDespawnR= new AnimationClip("LeverDeSpawn", {loop: false})
+    rightLever.get(GLTFShape).addClip(leverOffR)
+    rightLever.get(GLTFShape).addClip(leverOnR)
+    rightLever.get(GLTFShape).addClip(LeverDespawnR)
   
-  if (!rightLever.has(OnClick)){
-    rightLever.set(new OnClick(e => {
-      operateLeftLever(rightLever)
-    }))
+  
+    rightLever.setParent(trap)
+    
+    //if (!rightLever.has(OnClick)){
+      rightLever.set(new OnClick(e => {
+        operateLeftLever(rightLever)
+      }))
+    //}
+
+
   }
 
-  log("placed a trap in" + pos)
+ 
+
 }
 
 
@@ -490,6 +496,7 @@ function spawnCreep(){
     
   engine.addEntity(ent)
 }
+
 
 function generatePath(): Vector2[]
 {
