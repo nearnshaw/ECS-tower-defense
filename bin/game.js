@@ -25,11 +25,6 @@ var __values = (this && this.__values) || function (o) {
 define("game", ["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var ButtonState;
-    (function (ButtonState) {
-        ButtonState[ButtonState["Normal"] = 0] = "Normal";
-        ButtonState[ButtonState["Pressed"] = 1] = "Pressed";
-    })(ButtonState = exports.ButtonState || (exports.ButtonState = {}));
     var Pool = /** @class */ (function () {
         function Pool() {
             this.pool = [];
@@ -61,10 +56,18 @@ define("game", ["require", "exports"], function (require, exports) {
     ////////////////////////////////////
     // Custom components
     var ButtonData = /** @class */ (function () {
-        function ButtonData() {
+        function ButtonData(zUp, zDown) {
+            this.zUp = 0;
+            this.zDown = 0;
+            this.zUp = zUp;
+            this.zDown = zDown;
+            this.pressed = false;
+            this.fraction = 0;
+            this.timeDown = 2;
         }
         ButtonData = __decorate([
-            Component('buttonData')
+            Component('buttonData'),
+            __metadata("design:paramtypes", [Number, Number])
         ], ButtonData);
         return ButtonData;
     }());
@@ -155,7 +158,6 @@ define("game", ["require", "exports"], function (require, exports) {
                         creepData.lerpFraction += 1 / 60;
                     }
                     else {
-                        log(creepData.pathPos);
                         if (creepData.pathPos >= path.length - 2) {
                             gameData.creepScore += 1;
                             log("LOOOSE " + gameData.creepScore);
@@ -202,6 +204,7 @@ define("game", ["require", "exports"], function (require, exports) {
                                 var creepData = creep.get(CreepData);
                                 if (trapData.gridPos == creepData.gridPos
                                     && creepData.isDead == false) {
+                                    log("KILL");
                                     creepData.isDead = true;
                                     engine.removeEntity(creep);
                                     scoreTextHumans.get(TextShape).value = gameData.humanScore.toString();
@@ -230,27 +233,51 @@ define("game", ["require", "exports"], function (require, exports) {
     }());
     exports.killBlobs = killBlobs;
     engine.addSystem(new killBlobs());
+    var PushButton = /** @class */ (function () {
+        function PushButton() {
+        }
+        PushButton.prototype.update = function (dt) {
+            var e_4, _a;
+            try {
+                for (var _b = __values(buttons.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var button_1 = _c.value;
+                    var transform = button_1.get(Transform);
+                    var state = button_1.get(ButtonData);
+                    if (state.pressed == true) {
+                        if (state.fraction < 1) {
+                            transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction);
+                            state.fraction += 1 / 8;
+                        }
+                        state.timeDown -= dt;
+                        if (state.timeDown < 0) {
+                            state.pressed = false;
+                            state.timeDown = 2;
+                        }
+                    }
+                    else if (state.pressed == false && state.fraction > 0) {
+                        transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction);
+                        state.fraction -= 1 / 8;
+                    }
+                }
+            }
+            catch (e_4_1) { e_4 = { error: e_4_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_4) throw e_4.error; }
+            }
+        };
+        return PushButton;
+    }());
+    exports.PushButton = PushButton;
+    engine.addSystem(new PushButton);
     //////////////////////////////////////////
     // Add entities
     var game = new Entity();
     var gameData = new GameData();
     game.set(gameData);
-    var button = new Entity();
-    button.set(new Transform());
-    button.set(new BoxShape());
-    button.get(Transform).position.set(16.65, 0.7, 18.75);
-    var buttonData = new ButtonData();
-    button.set(buttonData);
-    buttonData.label = "New Game";
-    buttonData.state = ButtonState.Normal;
-    button.set(new OnClick(function (e) {
-        log("clicked");
-        buttonData.state = ButtonState.Pressed;
-        newGame();
-        // button up
-    }));
     engine.addEntity(game);
-    engine.addEntity(button);
     var floorMaterial = new Material;
     floorMaterial.albedoTexture = "materials/WoodFloor.png";
     var groundMaterial = new Material;
@@ -268,6 +295,33 @@ define("game", ["require", "exports"], function (require, exports) {
     scoreBoard.set(new Transform());
     scoreBoard.get(Transform).position.set(18.99, 0, 19);
     engine.addEntity(scoreBoard);
+    var buttonMaterial = new Material();
+    buttonMaterial.albedoColor = Color3.FromHexString("#990000");
+    var button = new Entity();
+    button.set(new Transform());
+    button.set(new CylinderShape());
+    button.set(buttonMaterial);
+    button.get(Transform).scale.set(.05, .2, .05);
+    button.get(Transform).rotation.eulerAngles = new Vector3(90, 0, 0);
+    button.get(Transform).position.set(0, 1, -0.3);
+    var buttonData = new ButtonData(-0.3, -0.2);
+    button.setParent(scoreBoard);
+    button.set(buttonData);
+    buttonData.label = "New Game";
+    button.set(new OnClick(function (e) {
+        log("clicked");
+        buttonData.pressed = true;
+        newGame();
+        // button up
+    }));
+    engine.addEntity(button);
+    var buttonLabel = new Entity();
+    buttonLabel.setParent(scoreBoard);
+    buttonLabel.set(new TextShape("New game"));
+    buttonLabel.get(TextShape).fontSize = 50;
+    buttonLabel.set(new Transform());
+    buttonLabel.get(Transform).position.set(0, 0.85, -.38);
+    engine.addEntity(buttonLabel);
     var scoreText1 = new Entity();
     scoreText1.setParent(scoreBoard);
     scoreText1.set(new TextShape("humans"));
@@ -306,7 +360,7 @@ define("game", ["require", "exports"], function (require, exports) {
     ///////////////////////////////////
     // Functions
     function newGame() {
-        var e_4, _a, e_5, _b, e_6, _c;
+        var e_5, _a, e_6, _b, e_7, _c;
         gameData.humanScore = 0;
         gameData.creepScore = 0;
         gameData.lost = false;
@@ -320,12 +374,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 engine.removeEntity(tile);
             }
         }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
         finally {
             try {
                 if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
             }
-            finally { if (e_4) throw e_4.error; }
+            finally { if (e_5) throw e_5.error; }
         }
         try {
             // get rid of old creeps
@@ -335,12 +389,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 engine.removeEntity(creep);
             }
         }
-        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        catch (e_6_1) { e_6 = { error: e_6_1 }; }
         finally {
             try {
                 if (_g && !_g.done && (_b = _f.return)) _b.call(_f);
             }
-            finally { if (e_5) throw e_5.error; }
+            finally { if (e_6) throw e_6.error; }
         }
         try {
             for (var _h = __values(traps.entities), _j = _h.next(); !_j.done; _j = _h.next()) {
@@ -348,12 +402,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 engine.removeEntity(trap);
             }
         }
-        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
                 if (_j && !_j.done && (_c = _h.return)) _c.call(_h);
             }
-            finally { if (e_6) throw e_6.error; }
+            finally { if (e_7) throw e_7.error; }
         }
         // create random path
         gameData.path = generatePath();
@@ -509,7 +563,7 @@ define("game", ["require", "exports"], function (require, exports) {
             && (position.x > 1 || position.y > 1);
     }
     function getNeighborCount(path, position) {
-        var e_7, _a;
+        var e_8, _a;
         var neighbors = [
             { x: position.x + 1, y: position.y },
             { x: position.x - 1, y: position.y },
@@ -528,12 +582,12 @@ define("game", ["require", "exports"], function (require, exports) {
                 _loop_2(neighbor);
             }
         }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        catch (e_8_1) { e_8 = { error: e_8_1 }; }
         finally {
             try {
                 if (neighbors_1_1 && !neighbors_1_1.done && (_a = neighbors_1.return)) _a.call(neighbors_1);
             }
-            finally { if (e_7) throw e_7.error; }
+            finally { if (e_8) throw e_8.error; }
         }
         return count;
     }

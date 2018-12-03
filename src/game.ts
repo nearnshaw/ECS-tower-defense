@@ -1,9 +1,4 @@
 
-export enum ButtonState
-{
-  Normal,
-  Pressed,
-}
 
 export const enum TrapState 
 {
@@ -47,8 +42,19 @@ const MAX_CREEPS = 4
 
 @Component('buttonData')
 export class ButtonData {
-  state: ButtonState
   label: string
+  pressed: boolean
+  zUp: number = 0
+  zDown: number = 0
+  fraction: number
+  timeDown: number
+  constructor(zUp: number, zDown: number){
+    this.zUp = zUp
+    this.zDown = zDown
+    this.pressed = false
+    this.fraction = 0
+    this.timeDown = 2
+  }
 }
 
 const buttons = engine.getComponentGroup(ButtonData)
@@ -177,16 +183,40 @@ export class killBlobs {
               creepData.isDead = true
               engine.removeEntity(creep)
               scoreTextHumans.get(TextShape).value = gameData.humanScore.toString()
-            }
-          
+            }    
         }
-      }
-      
+      } 
     }    
   }
 }
 
 engine.addSystem(new killBlobs())
+
+export class PushButton implements ISystem {
+  update(dt: number) {
+    for (let button of buttons.entities) {
+      let transform = button.get(Transform)
+      let state = button.get(ButtonData)
+      if (state.pressed == true){
+        if (state.fraction < 1){
+          transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction)
+          state.fraction += 1/8
+        }
+        state.timeDown -= dt
+        if (state.timeDown < 0){
+          state.pressed = false
+          state.timeDown = 2
+        }
+      }
+      else if (state.pressed == false && state.fraction > 0){
+        transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction)
+        state.fraction -= 1/8
+      }
+    }
+  }
+}
+
+engine.addSystem(new PushButton)
 
 //////////////////////////////////////////
 // Add entities
@@ -196,25 +226,7 @@ const game = new Entity()
 const gameData = new GameData()
 game.set(gameData)
 
-const button = new Entity()
-button.set(new Transform())
-button.set(new BoxShape())
-button.get(Transform).position.set(16.65, 0.7, 18.75)
-let buttonData = new ButtonData()
-button.set(buttonData)
-buttonData.label = "New Game"
-buttonData.state = ButtonState.Normal
-button.set(
-  new OnClick(e => {
-    log("clicked")
-    buttonData.state = ButtonState.Pressed
-    newGame()
-    // button up
-  })
-)
-
 engine.addEntity(game)
-engine.addEntity(button)
 
 
 const floorMaterial = new Material
@@ -238,6 +250,38 @@ scoreBoard.set(new GLTFShape("models/ScoreRock/ScoreRock.gltf"))
 scoreBoard.set(new Transform())
 scoreBoard.get(Transform).position.set(18.99, 0, 19)
 engine.addEntity(scoreBoard)
+
+let buttonMaterial = new Material()
+buttonMaterial.albedoColor = Color3.FromHexString("#990000") 
+
+const button = new Entity()
+button.set(new Transform())
+button.set(new CylinderShape())
+button.set(buttonMaterial)
+button.get(Transform).scale.set(.05, .2, .05)
+button.get(Transform).rotation.eulerAngles = new Vector3(90, 0, 0)
+button.get(Transform).position.set(0, 1, -0.3)
+let buttonData = new ButtonData(-0.3, -0.2)
+button.setParent(scoreBoard)
+button.set(buttonData)
+buttonData.label = "New Game"
+button.set(
+  new OnClick(e => {
+    log("clicked")
+    buttonData.pressed = true
+    newGame()
+    // button up
+  })
+)
+engine.addEntity(button)
+
+let buttonLabel = new Entity()
+buttonLabel.setParent(scoreBoard)
+buttonLabel.set(new TextShape("New game"))
+buttonLabel.get(TextShape).fontSize = 50
+buttonLabel.set(new Transform())
+buttonLabel.get(Transform).position.set(0, 0.85, -.38)
+engine.addEntity(buttonLabel)
 
 let scoreText1 = new Entity()
 scoreText1.setParent(scoreBoard)
