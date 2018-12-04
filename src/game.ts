@@ -1,5 +1,4 @@
 
-
 export const enum TrapState 
 {
   Available,
@@ -346,6 +345,7 @@ function newGame(){
     engine.removeEntity(creeps.entities[0])
   }
 
+  // get rid of old traps
   while(traps.entities.length) {
     engine.removeEntity(traps.entities[0])
   }
