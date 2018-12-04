@@ -172,17 +172,18 @@ function spawnTrap(){
   const trap = trapPool.getEntity()
   engine.addEntity(trap) 
 
-  let pos = randomTrapPosition()
+  let posIndex = randomTrapPosition()
 
+  let pos = gameData.path[posIndex]
   let t = trap.getOrCreate(Transform)
   t.position.set(pos.x, 0.11, pos.y)
   t.scale.setAll(0.5)
   
   if ( trap.has(TrapData)) {
-    trap.get(TrapData).reset(pos)
+    trap.get(TrapData).reset(posIndex)
   }
   else{
-    trap.set(new TrapData(pos))
+    trap.set(new TrapData(posIndex))
   }
 
   trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
@@ -271,7 +272,6 @@ export function spawnCreep(){
 
   let d = ent.getOrCreate(CreepData)
   d.isDead = false
-  d.gridPos = gameData.path[0]
   d.pathPos = 0
   d.lerpFraction = 0
 
@@ -395,7 +395,7 @@ function randomTrapPosition()
         && traps.entities.filter((t) => JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos)).length == 0
       )
       {
-        return position 
+        return posIndex 
       }
     } 
   }

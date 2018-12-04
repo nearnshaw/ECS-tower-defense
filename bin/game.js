@@ -66,21 +66,21 @@ define("components", ["require", "exports"], function (require, exports) {
     exports.CreepData = CreepData;
     exports.creeps = engine.getComponentGroup(CreepData);
     var TrapData = /** @class */ (function () {
-        function TrapData(gridPos) {
-            this.gridPos = gridPos;
+        function TrapData(pathPos) {
+            this.pathPos = pathPos;
             this.trapState = 0 /* Available */;
             this.leftLever = false;
             this.rightLever = false;
         }
-        TrapData.prototype.reset = function (gridPos) {
-            this.gridPos = gridPos;
+        TrapData.prototype.reset = function (pathPos) {
+            this.pathPos = pathPos;
             this.trapState = 0 /* Available */;
             this.leftLever = false;
             this.rightLever = false;
         };
         TrapData = __decorate([
             Component('trapdata'),
-            __metadata("design:paramtypes", [Vector2])
+            __metadata("design:paramtypes", [Number])
         ], TrapData);
         return TrapData;
     }());
@@ -163,8 +163,8 @@ define("systems", ["require", "exports", "components", "components", "game"], fu
                     }
                     else {
                         if (creepData.pathPos >= path.length - 2) {
-                            game_1.gameData.creepScore += 1;
                             log("LOOOSE " + game_1.gameData.creepScore);
+                            game_1.gameData.creepScore += 1;
                             game_1.scoreTextCreeps.get(TextShape).value = game_1.gameData.creepScore.toString();
                             engine.removeEntity(creep);
                         }
@@ -205,11 +205,13 @@ define("systems", ["require", "exports", "components", "components", "game"], fu
                             for (var _e = __values(components_2.creeps.entities), _f = _e.next(); !_f.done; _f = _e.next()) {
                                 var creep = _f.value;
                                 var creepData = creep.get(components_1.CreepData);
-                                if (trapData.gridPos == creepData.gridPos
+                                if (trapData.pathPos == creepData.pathPos
                                     && creepData.isDead == false) {
                                     log("KILL");
                                     creepData.isDead = true;
+                                    creep.get(GLTFShape).getClip("clipDie");
                                     engine.removeEntity(creep);
+                                    game_1.gameData.humanScore += 1;
                                     game_1.scoreTextHumans.get(TextShape).value = game_1.gameData.humanScore.toString();
                                 }
                             }
@@ -409,15 +411,16 @@ define("game", ["require", "exports", "components", "components"], function (req
     function spawnTrap() {
         var trap = trapPool.getEntity();
         engine.addEntity(trap);
-        var pos = randomTrapPosition();
+        var posIndex = randomTrapPosition();
+        var pos = exports.gameData.path[posIndex];
         var t = trap.getOrCreate(Transform);
         t.position.set(pos.x, 0.11, pos.y);
         t.scale.setAll(0.5);
         if (trap.has(components_3.TrapData)) {
-            trap.get(components_3.TrapData).reset(pos);
+            trap.get(components_3.TrapData).reset(posIndex);
         }
         else {
-            trap.set(new components_3.TrapData(pos));
+            trap.set(new components_3.TrapData(posIndex));
         }
         trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"));
         var spikeUp = new AnimationClip("SpikeUp", { loop: false });
@@ -485,7 +488,6 @@ define("game", ["require", "exports", "components", "components"], function (req
         t.position.set(10, 0.25, 1);
         var d = ent.getOrCreate(components_3.CreepData);
         d.isDead = false;
-        d.gridPos = exports.gameData.path[0];
         d.pathPos = 0;
         d.lerpFraction = 0;
         if (!ent.has(GLTFShape)) {
@@ -598,7 +600,7 @@ define("game", ["require", "exports", "components", "components"], function (req
                 && position.x > 2
                 && position.x < 18
                 && components_4.traps.entities.filter(function (t) { return JSON.stringify(position) == JSON.stringify(t.get(components_3.TrapData).gridPos); }).length == 0) {
-                return { value: position };
+                return { value: posIndex };
             }
         };
         while (true) {

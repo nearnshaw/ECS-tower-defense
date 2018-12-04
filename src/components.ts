@@ -40,7 +40,6 @@ export const tiles = engine.getComponentGroup(TilePos)
 
 @Component('creepData')
 export class CreepData {
-  gridPos: Vector2
   isDead: boolean
   pathPos: number
   lerpFraction: number
@@ -50,18 +49,18 @@ export const creeps = engine.getComponentGroup(CreepData)
 
 @Component('trapdata')
 export class TrapData {
-  gridPos: Vector2
+  pathPos: number
   trapState: TrapState
   leftLever: boolean
   rightLever: boolean
-  constructor(gridPos?: Vector2) {
-    this.gridPos = gridPos
+  constructor(pathPos?: number) {
+    this.pathPos = pathPos
     this.trapState = TrapState.Available
     this.leftLever = false
     this.rightLever = false
   }
-  reset(gridPos: Vector2) {
-    this.gridPos = gridPos
+  reset(pathPos: number) {
+    this.pathPos = pathPos
     this.trapState = TrapState.Available
     this.leftLever = false
     this.rightLever = false

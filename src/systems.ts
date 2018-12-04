@@ -32,8 +32,8 @@ export class SpawnCreeps implements ISystem {
         } 
         else {
           if (creepData.pathPos >= path.length - 2){
-            gameData.creepScore += 1
             log("LOOOSE "+ gameData.creepScore)
+            gameData.creepScore += 1
             scoreTextCreeps.get(TextShape).value = gameData.creepScore.toString()
             engine.removeEntity(creep)
           } 
@@ -63,11 +63,13 @@ export class SpawnCreeps implements ISystem {
           for( let creep of creeps.entities){
           
             let creepData = creep.get(CreepData)
-            if( trapData.gridPos == creepData.gridPos
+            if( trapData.pathPos == creepData.pathPos
               && creepData.isDead == false){
                 log("KILL")
                 creepData.isDead = true
+                creep.get(GLTFShape).getClip("clipDie")
                 engine.removeEntity(creep)
+                gameData.humanScore += 1
                 scoreTextHumans.get(TextShape).value = gameData.humanScore.toString()
               }    
           }
