@@ -10,11 +10,6 @@ const MAX_CREEPS = 4
 
 
 
-////////////////////////////////////////
-// Systems
-
-
-
 //////////////////////////////////////////
 // Scenery
 
@@ -142,9 +137,9 @@ function newGame(){
     engine.removeEntity(creeps.entities[0])
   }
 
-  // get rid of old traps
+  // get rid of old traps and children
   while(traps.entities.length) {
-    engine.removeEntity(traps.entities[0])
+    engine.removeEntity(traps.entities[0], true)
   }
 
   // create random path
@@ -172,8 +167,6 @@ function newGame(){
 let tilePool = new Pool()
 let creepPool = new Pool(MAX_CREEPS)
 let trapPool = new Pool(MAX_TRAPS)
-//creepPool.max = MAX_CREEPS
-//trapPool.max = MAX_TRAPS
 
 function spawnTrap(){
   const trap = trapPool.getEntity()
@@ -194,7 +187,7 @@ function spawnTrap(){
   trap.get(GLTFShape).addClip(spikeUp)
   trap.get(GLTFShape).addClip(despawn)
   
-  if (!trap.children){
+  if (!trap.children[1]){
     const leftLever = new Entity()
     engine.addEntity(leftLever)
     const rightLever = new Entity()

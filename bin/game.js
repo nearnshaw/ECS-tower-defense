@@ -283,8 +283,6 @@ define("game", ["require", "exports", "components", "components"], function (req
     Object.defineProperty(exports, "__esModule", { value: true });
     var MAX_TRAPS = 2;
     var MAX_CREEPS = 4;
-    ////////////////////////////////////////
-    // Systems
     //////////////////////////////////////////
     // Scenery
     var game = new Entity();
@@ -387,9 +385,9 @@ define("game", ["require", "exports", "components", "components"], function (req
             components_4.creeps.entities[0].get(components_3.CreepData).isDead = true;
             engine.removeEntity(components_4.creeps.entities[0]);
         }
-        // get rid of old traps
+        // get rid of old traps and children
         while (components_4.traps.entities.length) {
-            engine.removeEntity(components_4.traps.entities[0]);
+            engine.removeEntity(components_4.traps.entities[0], true);
         }
         // create random path
         exports.gameData.path = generatePath();
@@ -408,8 +406,6 @@ define("game", ["require", "exports", "components", "components"], function (req
     var tilePool = new components_3.Pool();
     var creepPool = new components_3.Pool(MAX_CREEPS);
     var trapPool = new components_3.Pool(MAX_TRAPS);
-    //creepPool.max = MAX_CREEPS
-    //trapPool.max = MAX_TRAPS
     function spawnTrap() {
         var trap = trapPool.getEntity();
         engine.addEntity(trap);
@@ -424,7 +420,7 @@ define("game", ["require", "exports", "components", "components"], function (req
         var despawn = new AnimationClip("Despawn", { loop: false });
         trap.get(GLTFShape).addClip(spikeUp);
         trap.get(GLTFShape).addClip(despawn);
-        if (!trap.children) {
+        if (!trap.children[1]) {
             var leftLever_1 = new Entity();
             engine.addEntity(leftLever_1);
             var rightLever_1 = new Entity();
