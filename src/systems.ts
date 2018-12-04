@@ -14,7 +14,7 @@ export class SpawnCreeps implements ISystem {
     }
   }
 
-  export class moveBlobs {
+  export class moveBlobs implements ISystem {
     update() {
       for( let creep of creeps.entities){
         let transform = creep.get(Transform)
@@ -55,7 +55,7 @@ export class SpawnCreeps implements ISystem {
   }
 
 
-  export class killBlobs {
+  export class killBlobs implements ISystem {
     update() {
       for (let trap of traps.entities){
         let trapData = trap.get(TrapData)
@@ -99,3 +99,13 @@ export class SpawnCreeps implements ISystem {
       }
     }
   }
+
+
+
+engine.addSystem(new SpawnCreeps())
+
+engine.addSystem(new moveBlobs())
+
+engine.addSystem(new killBlobs())
+
+engine.addSystem(new PushButton())

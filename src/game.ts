@@ -1,229 +1,26 @@
-
-export const enum TrapState 
-{
-  Available,
-  PreparedOne,
-  PreparedBoth,
-  Fired,
-  NotAvailable,
-}
+import { CreepData, TrapData, TrapState, ButtonData, GameData, TilePos, Pool } from "./components"
+import { creeps, traps, buttons, tiles } from "./components"
+import { SpawnCreeps, moveBlobs, killBlobs, PushButton} from "./systems";
 
 
-class Pool {
-  pool: Entity[] = []
-  max?: number = 1000
-  getEntity() {
-    for (let i = 0; i < this.pool.length; i++) {
-      const entity = this.pool[i]
-      if (!entity.alive) {
-        return entity
-      }
-    }
-    if (this.pool.length < this.max){
-      return this.newEntity()
-    } else {
-      return null
-    }
-  }
 
-  newEntity() {
-    const instance = new Entity()
-    instance.name = (Math.random() * 10000).toString()
-    this.pool.push(instance)
-    return instance
-  }
-}
 
 const MAX_TRAPS = 2
 const MAX_CREEPS = 4
 
-////////////////////////////////////
-// Custom components
 
-@Component('buttonData')
-export class ButtonData {
-  label: string
-  pressed: boolean
-  zUp: number = 0
-  zDown: number = 0
-  fraction: number
-  timeDown: number
-  constructor(zUp: number, zDown: number){
-    this.zUp = zUp
-    this.zDown = zDown
-    this.pressed = false
-    this.fraction = 0
-    this.timeDown = 2
-  }
-}
-
-const buttons = engine.getComponentGroup(ButtonData)
-
-@Component('tilePos')
-export class TilePos {
-  gridPos: Vector2
-}
-
-const tiles = engine.getComponentGroup(TilePos)
-
-@Component('creepData')
-export class CreepData {
-  gridPos: Vector2
-  isDead: boolean
-  pathPos: number
-  lerpFraction: number
-}
-
-const creeps = engine.getComponentGroup(CreepData)
-
-@Component('trapdata')
-export class TrapData {
-  gridPos: Vector2
-  trapState: TrapState
-  leftLever: boolean
-  rightLever: boolean
-  constructor(gridPos?: Vector2) {
-    this.gridPos = gridPos
-    this.trapState = TrapState.Available
-    this.leftLever = false
-    this.rightLever = false
-  }
-  reset(gridPos: Vector2) {
-    this.gridPos = gridPos
-    this.trapState = TrapState.Available
-    this.leftLever = false
-    this.rightLever = false
-  }
-}
-
-const traps = engine.getComponentGroup(TrapData)
-
-@Component('gameData')
-export class GameData {
-  won: boolean
-  lost: boolean
-  path: Vector2[]
-  creeps: Entity[]
-  traps: Entity[]
-  humanScore: number = 0
-  creepScore: number = 0
-  creepInterval: number
-}
 
 ////////////////////////////////////////
 // Systems
 
-export class SpawnCreeps implements ISystem {
-  update(dt: number) {
-    gameData.creepInterval -= dt
-    if (gameData.creepInterval < 0){
-      spawnCreep()
-      gameData.creepInterval = 3 + Math.random() * 3
-    }
-  }
-}
 
-engine.addSystem(new SpawnCreeps)
-
-
-export class moveBlobs {
-  update() {
-    for( let creep of creeps.entities){
-      let transform = creep.get(Transform)
-      let path =  gameData.path
-      let creepData = creep.get(CreepData)
-      if (creepData.lerpFraction < 1) {
-          const pos2d = Vector2.Lerp(
-          path[creepData.pathPos],
-          path[creepData.pathPos + 1],
-          creepData.lerpFraction
-          )
-        
-          transform.position.set(pos2d.x, 0.25, pos2d.y)
-          creepData.lerpFraction += 1 / 60
-      } 
-      else {
-        if (creepData.pathPos >= path.length - 2){
-          gameData.creepScore += 1
-          log("LOOOSE "+ gameData.creepScore)
-          scoreTextCreeps.get(TextShape).value = gameData.creepScore.toString()
-          engine.removeEntity(creep)
-        } 
-        else {
-          creepData.pathPos += 1     
-          creepData.lerpFraction = 0
-    
-          //rotate.previousRot = transform.rotation
-          //rotate.targetRot = fromToRotation(transform.position, path.target)
-          //rotate.rotateFraction = 0
-          let nextPos = new Vector3(path[creepData.pathPos + 1].x , 0.25, path[creepData.pathPos + 1].y)
-          transform.lookAt(nextPos)
-        }
-       
-      }
-
-    }  
-  }
-}
-
-engine.addSystem(new moveBlobs())
-
-
-export class killBlobs {
-  update() {
-    for (let trap of traps.entities){
-      let trapData = trap.get(TrapData)
-      if (trapData.trapState == TrapState.Fired){
-        for( let creep of creeps.entities){
-        
-          let creepData = creep.get(CreepData)
-          if( trapData.gridPos == creepData.gridPos
-            && creepData.isDead == false){
-              log("KILL")
-              creepData.isDead = true
-              engine.removeEntity(creep)
-              scoreTextHumans.get(TextShape).value = gameData.humanScore.toString()
-            }    
-        }
-      } 
-    }    
-  }
-}
-
-engine.addSystem(new killBlobs())
-
-export class PushButton implements ISystem {
-  update(dt: number) {
-    for (let button of buttons.entities) {
-      let transform = button.get(Transform)
-      let state = button.get(ButtonData)
-      if (state.pressed == true){
-        if (state.fraction < 1){
-          transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction)
-          state.fraction += 1/8
-        }
-        state.timeDown -= dt
-        if (state.timeDown < 0){
-          state.pressed = false
-          state.timeDown = 2
-        }
-      }
-      else if (state.pressed == false && state.fraction > 0){
-        transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction)
-        state.fraction -= 1/8
-      }
-    }
-  }
-}
-
-engine.addSystem(new PushButton)
 
 //////////////////////////////////////////
-// Add entities
+// Scenery
 
 
 const game = new Entity()
-const gameData = new GameData()
+export const gameData = new GameData()
 game.set(gameData)
 
 engine.addEntity(game)
@@ -307,7 +104,7 @@ scoreText3.set(new Transform())
 scoreText3.get(Transform).position.set(0, .35, -.38)
 engine.addEntity(scoreText3)
 
-let scoreTextHumans = new Entity()
+export let scoreTextHumans = new Entity()
 scoreTextHumans.setParent(scoreBoard)
 scoreTextHumans.set(new TextShape(gameData.humanScore.toString()))
 scoreTextHumans.get(TextShape).fontSize = 200
@@ -315,7 +112,7 @@ scoreTextHumans.set(new Transform())
 scoreTextHumans.get(Transform).position.set(-.4, .35, -.38)
 engine.addEntity(scoreTextHumans)
 
-let scoreTextCreeps = new Entity()
+export let scoreTextCreeps = new Entity()
 scoreTextCreeps.setParent(scoreBoard)
 scoreTextCreeps.set(new TextShape(gameData.creepScore.toString()))
 scoreTextCreeps.get(TextShape).fontSize = 200
@@ -324,7 +121,7 @@ scoreTextCreeps.get(Transform).position.set(.4, .35, -.38)
 engine.addEntity(scoreTextCreeps)
 
 ///////////////////////////////////
-// Functions
+// Startup
 
 function newGame(){
 
@@ -369,14 +166,14 @@ function newGame(){
 
 
 
-
-// Object pools
+////////////////////////
+// Object spawners & pools
 
 let tilePool = new Pool()
-let creepPool = new Pool()
-let trapPool = new Pool()
-creepPool.max = MAX_CREEPS
-trapPool.max = MAX_TRAPS
+let creepPool = new Pool(MAX_CREEPS)
+let trapPool = new Pool(MAX_TRAPS)
+//creepPool.max = MAX_CREEPS
+//trapPool.max = MAX_TRAPS
 
 function spawnTrap(){
   const trap = trapPool.getEntity()
@@ -471,7 +268,8 @@ function spawnTile(pos: Vector2) {
   engine.addEntity(ent)
 }
 
-function spawnCreep(){
+
+export function spawnCreep(){
   let ent = creepPool.getEntity()
   if (!ent) return
   log("new creep")
@@ -496,6 +294,8 @@ function spawnCreep(){
     
   engine.addEntity(ent)
 }
+
+// Random path generator
 
 
 function generatePath(): Vector2[]
@@ -580,6 +380,36 @@ function placeTraps(){
   }
 }
 
+// Random trap positions
+
+function randomTrapPosition()
+  {
+    let counter = 0;
+    while(true)
+    {
+      if(counter++ > 1000)
+      {
+        throw new Error("Invalid trap position, try again");
+      }
+      let path = gameData.path
+      const posIndex = Math.floor(Math.random() * path.length)
+      const position = gameData.path[posIndex]
+      if( path.filter((p) => p.x == position.x - 1 && p.y == position.y).length == 0
+        && path.filter((p) => p.x == position.x + 1 && p.y == position.y).length == 0
+        && position.y > 2
+        && position.y < 18
+        && position.x > 2
+        && position.x < 18
+        && traps.entities.filter((t) => JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos)).length == 0
+      )
+      {
+        return position 
+      }
+    } 
+  }
+
+  // Click interactions
+
 
 function operateLeftLever(lever: Entity){
   let data = lever.getParent().get(TrapData)
@@ -610,30 +440,3 @@ function operateRightLever(lever: Entity){
     }
   }
 }
-
-
-function randomTrapPosition()
-  {
-    let counter = 0;
-    while(true)
-    {
-      if(counter++ > 1000)
-      {
-        throw new Error("Invalid trap position, try again");
-      }
-      let path = gameData.path
-      const posIndex = Math.floor(Math.random() * path.length)
-      const position = gameData.path[posIndex]
-      if( path.filter((p) => p.x == position.x - 1 && p.y == position.y).length == 0
-        && path.filter((p) => p.x == position.x + 1 && p.y == position.y).length == 0
-        && position.y > 2
-        && position.y < 18
-        && position.x > 2
-        && position.x < 18
-        && traps.entities.filter((t) => JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos)).length == 0
-      )
-      {
-        return position 
-      }
-    } 
-  }

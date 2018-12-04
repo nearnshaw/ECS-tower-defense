@@ -97,14 +97,13 @@ define("components", ["require", "exports"], function (require, exports) {
         return GameData;
     }());
     exports.GameData = GameData;
-});
-define("game", ["require", "exports"], function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
     var Pool = /** @class */ (function () {
-        function Pool() {
+        function Pool(max) {
+            if (max === void 0) { max = 1000; }
             this.pool = [];
             this.max = 1000;
+            this.pool = [];
+            this.max = max;
         }
         Pool.prototype.getEntity = function () {
             for (var i = 0; i < this.pool.length; i++) {
@@ -128,107 +127,35 @@ define("game", ["require", "exports"], function (require, exports) {
         };
         return Pool;
     }());
-    var MAX_TRAPS = 2;
-    var MAX_CREEPS = 4;
-    ////////////////////////////////////
-    // Custom components
-    var ButtonData = /** @class */ (function () {
-        function ButtonData(zUp, zDown) {
-            this.zUp = 0;
-            this.zDown = 0;
-            this.zUp = zUp;
-            this.zDown = zDown;
-            this.pressed = false;
-            this.fraction = 0;
-            this.timeDown = 2;
-        }
-        ButtonData = __decorate([
-            Component('buttonData'),
-            __metadata("design:paramtypes", [Number, Number])
-        ], ButtonData);
-        return ButtonData;
-    }());
-    exports.ButtonData = ButtonData;
-    var buttons = engine.getComponentGroup(ButtonData);
-    var TilePos = /** @class */ (function () {
-        function TilePos() {
-        }
-        TilePos = __decorate([
-            Component('tilePos')
-        ], TilePos);
-        return TilePos;
-    }());
-    exports.TilePos = TilePos;
-    var tiles = engine.getComponentGroup(TilePos);
-    var CreepData = /** @class */ (function () {
-        function CreepData() {
-        }
-        CreepData = __decorate([
-            Component('creepData')
-        ], CreepData);
-        return CreepData;
-    }());
-    exports.CreepData = CreepData;
-    var creeps = engine.getComponentGroup(CreepData);
-    var TrapData = /** @class */ (function () {
-        function TrapData(gridPos) {
-            this.gridPos = gridPos;
-            this.trapState = 0 /* Available */;
-            this.leftLever = false;
-            this.rightLever = false;
-        }
-        TrapData.prototype.reset = function (gridPos) {
-            this.gridPos = gridPos;
-            this.trapState = 0 /* Available */;
-            this.leftLever = false;
-            this.rightLever = false;
-        };
-        TrapData = __decorate([
-            Component('trapdata'),
-            __metadata("design:paramtypes", [Vector2])
-        ], TrapData);
-        return TrapData;
-    }());
-    exports.TrapData = TrapData;
-    var traps = engine.getComponentGroup(TrapData);
-    var GameData = /** @class */ (function () {
-        function GameData() {
-            this.humanScore = 0;
-            this.creepScore = 0;
-        }
-        GameData = __decorate([
-            Component('gameData')
-        ], GameData);
-        return GameData;
-    }());
-    exports.GameData = GameData;
-    ////////////////////////////////////////
-    // Systems
+    exports.Pool = Pool;
+});
+define("systems", ["require", "exports", "components", "components", "game"], function (require, exports, components_1, components_2, game_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
     var SpawnCreeps = /** @class */ (function () {
         function SpawnCreeps() {
         }
         SpawnCreeps.prototype.update = function (dt) {
-            gameData.creepInterval -= dt;
-            if (gameData.creepInterval < 0) {
-                spawnCreep();
-                gameData.creepInterval = 3 + Math.random() * 3;
+            game_1.gameData.creepInterval -= dt;
+            if (game_1.gameData.creepInterval < 0) {
+                game_1.spawnCreep();
+                game_1.gameData.creepInterval = 3 + Math.random() * 3;
             }
         };
         return SpawnCreeps;
     }());
     exports.SpawnCreeps = SpawnCreeps;
-    engine.addSystem(new SpawnCreeps);
     var moveBlobs = /** @class */ (function () {
         function moveBlobs() {
         }
         moveBlobs.prototype.update = function () {
             var e_1, _a;
             try {
-                for (var _b = __values(creeps.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
+                for (var _b = __values(components_2.creeps.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var creep = _c.value;
                     var transform = creep.get(Transform);
-                    var path = gameData.path;
-                    var creepData = creep.get(CreepData);
+                    var path = game_1.gameData.path;
+                    var creepData = creep.get(components_1.CreepData);
                     if (creepData.lerpFraction < 1) {
                         var pos2d = Vector2.Lerp(path[creepData.pathPos], path[creepData.pathPos + 1], creepData.lerpFraction);
                         transform.position.set(pos2d.x, 0.25, pos2d.y);
@@ -236,9 +163,9 @@ define("game", ["require", "exports"], function (require, exports) {
                     }
                     else {
                         if (creepData.pathPos >= path.length - 2) {
-                            gameData.creepScore += 1;
-                            log("LOOOSE " + gameData.creepScore);
-                            scoreTextCreeps.get(TextShape).value = gameData.creepScore.toString();
+                            game_1.gameData.creepScore += 1;
+                            log("LOOOSE " + game_1.gameData.creepScore);
+                            game_1.scoreTextCreeps.get(TextShape).value = game_1.gameData.creepScore.toString();
                             engine.removeEntity(creep);
                         }
                         else {
@@ -264,27 +191,26 @@ define("game", ["require", "exports"], function (require, exports) {
         return moveBlobs;
     }());
     exports.moveBlobs = moveBlobs;
-    engine.addSystem(new moveBlobs());
     var killBlobs = /** @class */ (function () {
         function killBlobs() {
         }
         killBlobs.prototype.update = function () {
             var e_2, _a, e_3, _b;
             try {
-                for (var _c = __values(traps.entities), _d = _c.next(); !_d.done; _d = _c.next()) {
+                for (var _c = __values(components_2.traps.entities), _d = _c.next(); !_d.done; _d = _c.next()) {
                     var trap = _d.value;
-                    var trapData = trap.get(TrapData);
+                    var trapData = trap.get(components_1.TrapData);
                     if (trapData.trapState == 3 /* Fired */) {
                         try {
-                            for (var _e = __values(creeps.entities), _f = _e.next(); !_f.done; _f = _e.next()) {
+                            for (var _e = __values(components_2.creeps.entities), _f = _e.next(); !_f.done; _f = _e.next()) {
                                 var creep = _f.value;
-                                var creepData = creep.get(CreepData);
+                                var creepData = creep.get(components_1.CreepData);
                                 if (trapData.gridPos == creepData.gridPos
                                     && creepData.isDead == false) {
                                     log("KILL");
                                     creepData.isDead = true;
                                     engine.removeEntity(creep);
-                                    scoreTextHumans.get(TextShape).value = gameData.humanScore.toString();
+                                    game_1.scoreTextHumans.get(TextShape).value = game_1.gameData.humanScore.toString();
                                 }
                             }
                         }
@@ -309,17 +235,16 @@ define("game", ["require", "exports"], function (require, exports) {
         return killBlobs;
     }());
     exports.killBlobs = killBlobs;
-    engine.addSystem(new killBlobs());
     var PushButton = /** @class */ (function () {
         function PushButton() {
         }
         PushButton.prototype.update = function (dt) {
             var e_4, _a;
             try {
-                for (var _b = __values(buttons.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var button_1 = _c.value;
-                    var transform = button_1.get(Transform);
-                    var state = button_1.get(ButtonData);
+                for (var _b = __values(components_2.buttons.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var button = _c.value;
+                    var transform = button.get(Transform);
+                    var state = button.get(components_1.ButtonData);
                     if (state.pressed == true) {
                         if (state.fraction < 1) {
                             transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction);
@@ -348,12 +273,23 @@ define("game", ["require", "exports"], function (require, exports) {
         return PushButton;
     }());
     exports.PushButton = PushButton;
-    engine.addSystem(new PushButton);
+    engine.addSystem(new SpawnCreeps());
+    engine.addSystem(new moveBlobs());
+    engine.addSystem(new killBlobs());
+    engine.addSystem(new PushButton());
+});
+define("game", ["require", "exports", "components", "components"], function (require, exports, components_3, components_4) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var MAX_TRAPS = 2;
+    var MAX_CREEPS = 4;
+    ////////////////////////////////////////
+    // Systems
     //////////////////////////////////////////
-    // Add entities
+    // Scenery
     var game = new Entity();
-    var gameData = new GameData();
-    game.set(gameData);
+    exports.gameData = new components_3.GameData();
+    game.set(exports.gameData);
     engine.addEntity(game);
     var floorMaterial = new Material;
     floorMaterial.albedoTexture = "materials/WoodFloor.png";
@@ -381,7 +317,7 @@ define("game", ["require", "exports"], function (require, exports) {
     button.get(Transform).scale.set(.05, .2, .05);
     button.get(Transform).rotation.eulerAngles = new Vector3(90, 0, 0);
     button.get(Transform).position.set(0, 1, -0.3);
-    var buttonData = new ButtonData(-0.3, -0.2);
+    var buttonData = new components_3.ButtonData(-0.3, -0.2);
     button.setParent(scoreBoard);
     button.set(buttonData);
     buttonData.label = "New Game";
@@ -420,59 +356,60 @@ define("game", ["require", "exports"], function (require, exports) {
     scoreText3.set(new Transform());
     scoreText3.get(Transform).position.set(0, .35, -.38);
     engine.addEntity(scoreText3);
-    var scoreTextHumans = new Entity();
-    scoreTextHumans.setParent(scoreBoard);
-    scoreTextHumans.set(new TextShape(gameData.humanScore.toString()));
-    scoreTextHumans.get(TextShape).fontSize = 200;
-    scoreTextHumans.set(new Transform());
-    scoreTextHumans.get(Transform).position.set(-.4, .35, -.38);
-    engine.addEntity(scoreTextHumans);
-    var scoreTextCreeps = new Entity();
-    scoreTextCreeps.setParent(scoreBoard);
-    scoreTextCreeps.set(new TextShape(gameData.creepScore.toString()));
-    scoreTextCreeps.get(TextShape).fontSize = 200;
-    scoreTextCreeps.set(new Transform());
-    scoreTextCreeps.get(Transform).position.set(.4, .35, -.38);
-    engine.addEntity(scoreTextCreeps);
+    exports.scoreTextHumans = new Entity();
+    exports.scoreTextHumans.setParent(scoreBoard);
+    exports.scoreTextHumans.set(new TextShape(exports.gameData.humanScore.toString()));
+    exports.scoreTextHumans.get(TextShape).fontSize = 200;
+    exports.scoreTextHumans.set(new Transform());
+    exports.scoreTextHumans.get(Transform).position.set(-.4, .35, -.38);
+    engine.addEntity(exports.scoreTextHumans);
+    exports.scoreTextCreeps = new Entity();
+    exports.scoreTextCreeps.setParent(scoreBoard);
+    exports.scoreTextCreeps.set(new TextShape(exports.gameData.creepScore.toString()));
+    exports.scoreTextCreeps.get(TextShape).fontSize = 200;
+    exports.scoreTextCreeps.set(new Transform());
+    exports.scoreTextCreeps.get(Transform).position.set(.4, .35, -.38);
+    engine.addEntity(exports.scoreTextCreeps);
     ///////////////////////////////////
-    // Functions
+    // Startup
     function newGame() {
-        gameData.humanScore = 0;
-        gameData.creepScore = 0;
-        gameData.lost = false;
-        gameData.won = false;
-        gameData.creepInterval = 3;
+        exports.gameData.humanScore = 0;
+        exports.gameData.creepScore = 0;
+        exports.gameData.lost = false;
+        exports.gameData.won = false;
+        exports.gameData.creepInterval = 3;
         // get rid of old path
-        while (tiles.entities.length) {
-            engine.removeEntity(tiles.entities[0]);
+        while (components_4.tiles.entities.length) {
+            engine.removeEntity(components_4.tiles.entities[0]);
         }
         // get rid of old creeps
-        while (creeps.entities.length) {
-            creeps.entities[0].get(CreepData).isDead = true;
-            engine.removeEntity(creeps.entities[0]);
+        while (components_4.creeps.entities.length) {
+            components_4.creeps.entities[0].get(components_3.CreepData).isDead = true;
+            engine.removeEntity(components_4.creeps.entities[0]);
         }
         // get rid of old traps
-        while (traps.entities.length) {
-            engine.removeEntity(traps.entities[0]);
+        while (components_4.traps.entities.length) {
+            engine.removeEntity(components_4.traps.entities[0]);
         }
         // create random path
-        gameData.path = generatePath();
+        exports.gameData.path = generatePath();
         // draw path with tiles
-        for (var tile in gameData.path) {
-            var pos = gameData.path[tile];
+        for (var tile in exports.gameData.path) {
+            var pos = exports.gameData.path[tile];
             spawnTile(pos);
         }
         log('creating tiles');
-        log(tiles.entities.length);
+        log(components_4.tiles.entities.length);
         // add traps
         placeTraps();
     }
-    // Object pools
-    var tilePool = new Pool();
-    var creepPool = new Pool();
-    var trapPool = new Pool();
-    creepPool.max = MAX_CREEPS;
-    trapPool.max = MAX_TRAPS;
+    ////////////////////////
+    // Object spawners & pools
+    var tilePool = new components_3.Pool();
+    var creepPool = new components_3.Pool(MAX_CREEPS);
+    var trapPool = new components_3.Pool(MAX_TRAPS);
+    //creepPool.max = MAX_CREEPS
+    //trapPool.max = MAX_TRAPS
     function spawnTrap() {
         var trap = trapPool.getEntity();
         engine.addEntity(trap);
@@ -480,7 +417,7 @@ define("game", ["require", "exports"], function (require, exports) {
         var t = trap.getOrCreate(Transform);
         t.position.set(pos.x, 0.11, pos.y);
         t.scale.setAll(0.5);
-        var d = trap.getOrCreate(TrapData);
+        var d = trap.getOrCreate(components_3.TrapData);
         d.gridPos = pos;
         trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"));
         var spikeUp = new AnimationClip("SpikeUp", { loop: false });
@@ -531,7 +468,7 @@ define("game", ["require", "exports"], function (require, exports) {
         var t = ent.getOrCreate(Transform);
         t.position.set(pos.x, 0.1, pos.y);
         t.rotation.setEuler(90, 0, 0);
-        var p = ent.getOrCreate(TilePos);
+        var p = ent.getOrCreate(components_3.TilePos);
         p.gridPos = pos;
         ent.set(new PlaneShape);
         ent.set(floorMaterial);
@@ -544,9 +481,9 @@ define("game", ["require", "exports"], function (require, exports) {
         log("new creep");
         var t = ent.getOrCreate(Transform);
         t.position.set(10, 0.25, 1);
-        var d = ent.getOrCreate(CreepData);
+        var d = ent.getOrCreate(components_3.CreepData);
         d.isDead = false;
-        d.gridPos = gameData.path[0];
+        d.gridPos = exports.gameData.path[0];
         d.pathPos = 0;
         d.lerpFraction = 0;
         if (!ent.has(GLTFShape)) {
@@ -559,6 +496,8 @@ define("game", ["require", "exports"], function (require, exports) {
         }
         engine.addEntity(ent);
     }
+    exports.spawnCreep = spawnCreep;
+    // Random path generator
     function generatePath() {
         var path = [];
         var position = new Vector2(10, 1);
@@ -640,8 +579,35 @@ define("game", ["require", "exports"], function (require, exports) {
             spawnTrap();
         }
     }
+    // Random trap positions
+    function randomTrapPosition() {
+        var counter = 0;
+        var _loop_3 = function () {
+            if (counter++ > 1000) {
+                throw new Error("Invalid trap position, try again");
+            }
+            var path = exports.gameData.path;
+            var posIndex = Math.floor(Math.random() * path.length);
+            var position = exports.gameData.path[posIndex];
+            if (path.filter(function (p) { return p.x == position.x - 1 && p.y == position.y; }).length == 0
+                && path.filter(function (p) { return p.x == position.x + 1 && p.y == position.y; }).length == 0
+                && position.y > 2
+                && position.y < 18
+                && position.x > 2
+                && position.x < 18
+                && components_4.traps.entities.filter(function (t) { return JSON.stringify(position) == JSON.stringify(t.get(components_3.TrapData).gridPos); }).length == 0) {
+                return { value: position };
+            }
+        };
+        while (true) {
+            var state_1 = _loop_3();
+            if (typeof state_1 === "object")
+                return state_1.value;
+        }
+    }
+    // Click interactions
     function operateLeftLever(lever) {
-        var data = lever.getParent().get(TrapData);
+        var data = lever.getParent().get(components_3.TrapData);
         if (data.leftLever) {
             data.leftLever = false;
             lever.get(GLTFShape).getClip("LeverOff").play();
@@ -656,7 +622,7 @@ define("game", ["require", "exports"], function (require, exports) {
         }
     }
     function operateRightLever(lever) {
-        var data = lever.getParent().get(TrapData);
+        var data = lever.getParent().get(components_3.TrapData);
         if (data.rightLever) {
             data.rightLever = false;
             lever.get(GLTFShape).getClip("LeverOff").play();
@@ -670,174 +636,4 @@ define("game", ["require", "exports"], function (require, exports) {
             }
         }
     }
-    function randomTrapPosition() {
-        var counter = 0;
-        var _loop_3 = function () {
-            if (counter++ > 1000) {
-                throw new Error("Invalid trap position, try again");
-            }
-            var path = gameData.path;
-            var posIndex = Math.floor(Math.random() * path.length);
-            var position = gameData.path[posIndex];
-            if (path.filter(function (p) { return p.x == position.x - 1 && p.y == position.y; }).length == 0
-                && path.filter(function (p) { return p.x == position.x + 1 && p.y == position.y; }).length == 0
-                && position.y > 2
-                && position.y < 18
-                && position.x > 2
-                && position.x < 18
-                && traps.entities.filter(function (t) { return JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos); }).length == 0) {
-                return { value: position };
-            }
-        };
-        while (true) {
-            var state_1 = _loop_3();
-            if (typeof state_1 === "object")
-                return state_1.value;
-        }
-    }
-});
-define("systems", ["require", "exports", "components", "components", "game"], function (require, exports, components_1, components_2, game_1) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var SpawnCreeps = /** @class */ (function () {
-        function SpawnCreeps() {
-        }
-        SpawnCreeps.prototype.update = function (dt) {
-            game_1.gameData.creepInterval -= dt;
-            if (game_1.gameData.creepInterval < 0) {
-                game_1.spawnCreep();
-                game_1.gameData.creepInterval = 3 + Math.random() * 3;
-            }
-        };
-        return SpawnCreeps;
-    }());
-    exports.SpawnCreeps = SpawnCreeps;
-    var moveBlobs = /** @class */ (function () {
-        function moveBlobs() {
-        }
-        moveBlobs.prototype.update = function () {
-            var e_6, _a;
-            try {
-                for (var _b = __values(components_2.creeps.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var creep = _c.value;
-                    var transform = creep.get(Transform);
-                    var path = game_1.gameData.path;
-                    var creepData = creep.get(components_1.CreepData);
-                    if (creepData.lerpFraction < 1) {
-                        var pos2d = Vector2.Lerp(path[creepData.pathPos], path[creepData.pathPos + 1], creepData.lerpFraction);
-                        transform.position.set(pos2d.x, 0.25, pos2d.y);
-                        creepData.lerpFraction += 1 / 60;
-                    }
-                    else {
-                        if (creepData.pathPos >= path.length - 2) {
-                            game_1.gameData.creepScore += 1;
-                            log("LOOOSE " + game_1.gameData.creepScore);
-                            game_1.scoreTextCreeps.get(TextShape).value = game_1.gameData.creepScore.toString();
-                            engine.removeEntity(creep);
-                        }
-                        else {
-                            creepData.pathPos += 1;
-                            creepData.lerpFraction = 0;
-                            //rotate.previousRot = transform.rotation
-                            //rotate.targetRot = fromToRotation(transform.position, path.target)
-                            //rotate.rotateFraction = 0
-                            var nextPos = new Vector3(path[creepData.pathPos + 1].x, 0.25, path[creepData.pathPos + 1].y);
-                            transform.lookAt(nextPos);
-                        }
-                    }
-                }
-            }
-            catch (e_6_1) { e_6 = { error: e_6_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_6) throw e_6.error; }
-            }
-        };
-        return moveBlobs;
-    }());
-    exports.moveBlobs = moveBlobs;
-    var killBlobs = /** @class */ (function () {
-        function killBlobs() {
-        }
-        killBlobs.prototype.update = function () {
-            var e_7, _a, e_8, _b;
-            try {
-                for (var _c = __values(components_2.traps.entities), _d = _c.next(); !_d.done; _d = _c.next()) {
-                    var trap = _d.value;
-                    var trapData = trap.get(components_1.TrapData);
-                    if (trapData.trapState == 3 /* Fired */) {
-                        try {
-                            for (var _e = __values(components_2.creeps.entities), _f = _e.next(); !_f.done; _f = _e.next()) {
-                                var creep = _f.value;
-                                var creepData = creep.get(components_1.CreepData);
-                                if (trapData.gridPos == creepData.gridPos
-                                    && creepData.isDead == false) {
-                                    log("KILL");
-                                    creepData.isDead = true;
-                                    engine.removeEntity(creep);
-                                    game_1.scoreTextHumans.get(TextShape).value = game_1.gameData.humanScore.toString();
-                                }
-                            }
-                        }
-                        catch (e_8_1) { e_8 = { error: e_8_1 }; }
-                        finally {
-                            try {
-                                if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
-                            }
-                            finally { if (e_8) throw e_8.error; }
-                        }
-                    }
-                }
-            }
-            catch (e_7_1) { e_7 = { error: e_7_1 }; }
-            finally {
-                try {
-                    if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
-                }
-                finally { if (e_7) throw e_7.error; }
-            }
-        };
-        return killBlobs;
-    }());
-    exports.killBlobs = killBlobs;
-    var PushButton = /** @class */ (function () {
-        function PushButton() {
-        }
-        PushButton.prototype.update = function (dt) {
-            var e_9, _a;
-            try {
-                for (var _b = __values(components_2.buttons.entities), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var button = _c.value;
-                    var transform = button.get(Transform);
-                    var state = button.get(components_1.ButtonData);
-                    if (state.pressed == true) {
-                        if (state.fraction < 1) {
-                            transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction);
-                            state.fraction += 1 / 8;
-                        }
-                        state.timeDown -= dt;
-                        if (state.timeDown < 0) {
-                            state.pressed = false;
-                            state.timeDown = 2;
-                        }
-                    }
-                    else if (state.pressed == false && state.fraction > 0) {
-                        transform.position.z = Scalar.Lerp(state.zUp, state.zDown, state.fraction);
-                        state.fraction -= 1 / 8;
-                    }
-                }
-            }
-            catch (e_9_1) { e_9 = { error: e_9_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_9) throw e_9.error; }
-            }
-        };
-        return PushButton;
-    }());
-    exports.PushButton = PushButton;
 });
