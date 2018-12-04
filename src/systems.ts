@@ -1,7 +1,7 @@
 
 import { CreepData, TrapData, TrapState, ButtonData, GameData, TilePos, Pool } from "./components"
 import { creeps, traps, buttons, tiles } from "./components"
-import { gameData, scoreTextCreeps, scoreTextHumans, spawnCreep} from "./game";
+import { gameData, scoreTextCreeps, scoreTextHumans, spawnCreep, spawnTrap} from "./game";
 
 
 export class SpawnCreeps implements ISystem {
@@ -67,10 +67,13 @@ export class SpawnCreeps implements ISystem {
               && creepData.isDead == false){
                 log("KILL")
                 creepData.isDead = true
-                creep.get(GLTFShape).getClip("clipDie")
-                engine.removeEntity(creep)
+                creep.get(GLTFShape).getClip("clipDie").play()
+                trap.get(GLTFShape).getClip("Despawn").play()
                 gameData.humanScore += 1
                 scoreTextHumans.get(TextShape).value = gameData.humanScore.toString()
+                engine.removeEntity(creep)
+                engine.removeEntity(trap, true)
+                spawnTrap()
               }    
           }
         } 

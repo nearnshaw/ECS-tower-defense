@@ -209,10 +209,13 @@ define("systems", ["require", "exports", "components", "components", "game"], fu
                                     && creepData.isDead == false) {
                                     log("KILL");
                                     creepData.isDead = true;
-                                    creep.get(GLTFShape).getClip("clipDie");
-                                    engine.removeEntity(creep);
+                                    creep.get(GLTFShape).getClip("clipDie").play();
+                                    trap.get(GLTFShape).getClip("Despawn").play();
                                     game_1.gameData.humanScore += 1;
                                     game_1.scoreTextHumans.get(TextShape).value = game_1.gameData.humanScore.toString();
+                                    engine.removeEntity(creep);
+                                    engine.removeEntity(trap, true);
+                                    game_1.spawnTrap();
                                 }
                             }
                         }
@@ -423,7 +426,7 @@ define("game", ["require", "exports", "components", "components"], function (req
             trap.set(new components_3.TrapData(posIndex));
         }
         trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"));
-        var spikeUp = new AnimationClip("SpikeUp", { loop: false });
+        var spikeUp = new AnimationClip("SpikeUp", { loop: false, speed: 0.5 });
         var despawn = new AnimationClip("Despawn", { loop: false });
         trap.get(GLTFShape).addClip(spikeUp);
         trap.get(GLTFShape).addClip(despawn);
@@ -454,20 +457,21 @@ define("game", ["require", "exports", "components", "components"], function (req
         engine.addEntity(leftLever);
         engine.addEntity(rightLever);
         leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"));
-        var leverOffL = new AnimationClip("LeverOff", { loop: false });
-        var leverOnL = new AnimationClip("LeverOn", { loop: false });
+        var leverOffL = new AnimationClip("LeverOff", { loop: false, speed: 0.5 });
+        var leverOnL = new AnimationClip("LeverOn", { loop: false, speed: 0.5 });
         var LeverDespawnL = new AnimationClip("LeverDeSpawn", { loop: false });
         leftLever.get(GLTFShape).addClip(leverOffL);
         leftLever.get(GLTFShape).addClip(leverOnL);
         leftLever.get(GLTFShape).addClip(LeverDespawnL);
         rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"));
-        var leverOffR = new AnimationClip("LeverOff", { loop: false });
-        var leverOnR = new AnimationClip("LeverOn", { loop: false });
+        var leverOffR = new AnimationClip("LeverOff", { loop: false, speed: 0.5 });
+        var leverOnR = new AnimationClip("LeverOn", { loop: false, speed: 0.5 });
         var LeverDespawnR = new AnimationClip("LeverDeSpawn", { loop: false });
         rightLever.get(GLTFShape).addClip(leverOffR);
         rightLever.get(GLTFShape).addClip(leverOnR);
         rightLever.get(GLTFShape).addClip(LeverDespawnR);
     }
+    exports.spawnTrap = spawnTrap;
     function spawnTile(pos) {
         var ent = tilePool.getEntity();
         var t = ent.getOrCreate(Transform);
@@ -479,6 +483,7 @@ define("game", ["require", "exports", "components", "components"], function (req
         ent.set(floorMaterial);
         engine.addEntity(ent);
     }
+    exports.spawnTile = spawnTile;
     function spawnCreep() {
         var ent = creepPool.getEntity();
         if (!ent)
@@ -541,6 +546,7 @@ define("game", ["require", "exports", "components", "components"], function (req
         path.push(JSON.parse(JSON.stringify(position)));
         return path;
     }
+    exports.generatePath = generatePath;
     function isValidPosition(position) {
         return position.x >= 1
             && position.x < 19
@@ -549,6 +555,7 @@ define("game", ["require", "exports", "components", "components"], function (req
             && (position.x < 18 || position.y < 18)
             && (position.x > 1 || position.y > 1);
     }
+    exports.isValidPosition = isValidPosition;
     function getNeighborCount(path, position) {
         var e_5, _a;
         var neighbors = [
@@ -578,11 +585,13 @@ define("game", ["require", "exports", "components", "components"], function (req
         }
         return count;
     }
+    exports.getNeighborCount = getNeighborCount;
     function placeTraps() {
         for (var i = 0; i < MAX_TRAPS; i++) {
             spawnTrap();
         }
     }
+    exports.placeTraps = placeTraps;
     // Random trap positions
     function randomTrapPosition() {
         var counter = 0;
@@ -599,7 +608,7 @@ define("game", ["require", "exports", "components", "components"], function (req
                 && position.y < 18
                 && position.x > 2
                 && position.x < 18
-                && components_4.traps.entities.filter(function (t) { return JSON.stringify(position) == JSON.stringify(t.get(components_3.TrapData).gridPos); }).length == 0) {
+                && components_4.traps.entities.filter(function (t) { return posIndex == t.get(components_3.TrapData).pathPos; }).length == 0) {
                 return { value: posIndex };
             }
         };
@@ -609,6 +618,7 @@ define("game", ["require", "exports", "components", "components"], function (req
                 return state_1.value;
         }
     }
+    exports.randomTrapPosition = randomTrapPosition;
     // Click interactions
     function operateLeftLever(lever) {
         var data = lever.getParent().get(components_3.TrapData);
@@ -625,6 +635,7 @@ define("game", ["require", "exports", "components", "components"], function (req
             }
         }
     }
+    exports.operateLeftLever = operateLeftLever;
     function operateRightLever(lever) {
         var data = lever.getParent().get(components_3.TrapData);
         if (!data.rightLever) {
@@ -640,4 +651,5 @@ define("game", ["require", "exports", "components", "components"], function (req
             }
         }
     }
+    exports.operateRightLever = operateRightLever;
 });

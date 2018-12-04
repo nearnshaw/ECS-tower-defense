@@ -168,7 +168,7 @@ let tilePool = new Pool()
 let creepPool = new Pool(MAX_CREEPS)
 let trapPool = new Pool(MAX_TRAPS)
 
-function spawnTrap(){
+export function spawnTrap(){
   const trap = trapPool.getEntity()
   engine.addEntity(trap) 
 
@@ -187,7 +187,7 @@ function spawnTrap(){
   }
 
   trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
-  const spikeUp = new AnimationClip("SpikeUp", {loop: false})
+  const spikeUp = new AnimationClip("SpikeUp", {loop: false, speed: 0.5})
   const despawn= new AnimationClip("Despawn", {loop: false})
   trap.get(GLTFShape).addClip(spikeUp)
   trap.get(GLTFShape).addClip(despawn)
@@ -227,16 +227,16 @@ function spawnTrap(){
   engine.addEntity(rightLever) 
 
   leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
-  const leverOffL = new AnimationClip("LeverOff", {loop: false})
-  const leverOnL= new AnimationClip("LeverOn", {loop: false})
+  const leverOffL = new AnimationClip("LeverOff", {loop: false, speed: 0.5})
+  const leverOnL= new AnimationClip("LeverOn", {loop: false, speed: 0.5})
   const LeverDespawnL= new AnimationClip("LeverDeSpawn", {loop: false})
   leftLever.get(GLTFShape).addClip(leverOffL)
   leftLever.get(GLTFShape).addClip(leverOnL)
   leftLever.get(GLTFShape).addClip(LeverDespawnL)
   
   rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
-  const leverOffR = new AnimationClip("LeverOff", {loop: false})
-  const leverOnR= new AnimationClip("LeverOn", {loop: false})
+  const leverOffR = new AnimationClip("LeverOff", {loop: false, speed: 0.5})
+  const leverOnR= new AnimationClip("LeverOn", {loop: false, speed: 0.5})
   const LeverDespawnR= new AnimationClip("LeverDeSpawn", {loop: false})
   rightLever.get(GLTFShape).addClip(leverOffR)
   rightLever.get(GLTFShape).addClip(leverOnR)
@@ -245,7 +245,7 @@ function spawnTrap(){
 }
 
 
-function spawnTile(pos: Vector2) {
+export function spawnTile(pos: Vector2) {
   const ent = tilePool.getEntity()
 
   let t = ent.getOrCreate(Transform)
@@ -290,7 +290,7 @@ export function spawnCreep(){
 // Random path generator
 
 
-function generatePath(): Vector2[]
+export function generatePath(): Vector2[]
 {
   const path: Vector2[] = []
   let position = new Vector2(10, 1)
@@ -334,7 +334,7 @@ function generatePath(): Vector2[]
   return path;
 }
 
-function isValidPosition(position: Vector2)
+export function isValidPosition(position: Vector2)
 {
   return position.x >= 1 
     && position.x < 19 
@@ -344,7 +344,7 @@ function isValidPosition(position: Vector2)
     && (position.x > 1 || position.y > 1);
 }
 
-function getNeighborCount(path: Vector2[], position: Vector2)
+export function getNeighborCount(path: Vector2[], position: Vector2)
 {
   const neighbors: {x: number, y: number}[] = [
     {x: position.x + 1, y: position.y},
@@ -365,7 +365,7 @@ function getNeighborCount(path: Vector2[], position: Vector2)
   return count;
 }
 
-function placeTraps(){
+export function placeTraps(){
   for (let i = 0; i < MAX_TRAPS; i ++)
   {
     spawnTrap()
@@ -374,7 +374,7 @@ function placeTraps(){
 
 // Random trap positions
 
-function randomTrapPosition()
+export function randomTrapPosition()
   {
     let counter = 0;
     while(true)
@@ -392,7 +392,7 @@ function randomTrapPosition()
         && position.y < 18
         && position.x > 2
         && position.x < 18
-        && traps.entities.filter((t) => JSON.stringify(position) == JSON.stringify(t.get(TrapData).gridPos)).length == 0
+        && traps.entities.filter((t) => posIndex == t.get(TrapData).pathPos).length == 0
       )
       {
         return posIndex 
@@ -403,7 +403,7 @@ function randomTrapPosition()
   // Click interactions
 
 
-function operateLeftLever(lever: Entity){
+export function operateLeftLever(lever: Entity){
   let data = lever.getParent().get(TrapData)
   if(!data.leftLever){
   //   data.leftLever = false
@@ -419,7 +419,7 @@ function operateLeftLever(lever: Entity){
   }
 }
 
-function operateRightLever(lever: Entity){
+export function operateRightLever(lever: Entity){
   let data = lever.getParent().get(TrapData)
   if(!data.rightLever){
   //   data.rightLever = false
