@@ -133,7 +133,7 @@ function newGame(){
   
   // get rid of old creeps
   while(creeps.entities.length) {
-    creeps.entities[0].get(CreepData).isDead = true;
+    //creeps.entities[0].get(CreepData).isDead = true;
     engine.removeEntity(creeps.entities[0])
   }
 
@@ -177,9 +177,13 @@ function spawnTrap(){
   let t = trap.getOrCreate(Transform)
   t.position.set(pos.x, 0.11, pos.y)
   t.scale.setAll(0.5)
-
-  let d = trap.getOrCreate(TrapData)
-  d.gridPos = pos
+  
+  if ( trap.has(TrapData)) {
+    trap.get(TrapData).reset(pos)
+  }
+  else{
+    trap.set(new TrapData(pos))
+  }
 
   trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
   const spikeUp = new AnimationClip("SpikeUp", {loop: false})
@@ -187,61 +191,56 @@ function spawnTrap(){
   trap.get(GLTFShape).addClip(spikeUp)
   trap.get(GLTFShape).addClip(despawn)
   
+  let leftLever
+  let rightLever
+
   if (!trap.children[1]){
-    const leftLever = new Entity()
-    engine.addEntity(leftLever)
-    const rightLever = new Entity()
-    engine.addEntity(rightLever)   
+    leftLever = new Entity()  
+    rightLever = new Entity() 
 
     let lt = leftLever.getOrCreate(Transform)
     lt.position.set(-1.5, 0, 0)
     lt.rotation.eulerAngles = new Vector3(0, 90, 0)
-  
-  
-    leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
-    const leverOffL = new AnimationClip("LeverOff", {loop: false})
-    const leverOnL= new AnimationClip("LeverOn", {loop: false})
-    const LeverDespawnL= new AnimationClip("LeverDeSpawn", {loop: false})
-    leftLever.get(GLTFShape).addClip(leverOffL)
-    leftLever.get(GLTFShape).addClip(leverOnL)
-    leftLever.get(GLTFShape).addClip(LeverDespawnL)
-  
-  
-    leftLever.setParent(trap)
-    
-    //if (!leftLever.has(OnClick)){
-      leftLever.set(new OnClick(e => {
-        operateLeftLever(leftLever)
-      }))
-    //}
-  
+
     let rt = rightLever.getOrCreate(Transform)
     rt.position.set(1.5, 0, 0)
     rt.rotation.eulerAngles = new Vector3(0, 90, 0)
-  
-    
-    rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
-    const leverOffR = new AnimationClip("LeverOff", {loop: false})
-    const leverOnR= new AnimationClip("LeverOn", {loop: false})
-    const LeverDespawnR= new AnimationClip("LeverDeSpawn", {loop: false})
-    rightLever.get(GLTFShape).addClip(leverOffR)
-    rightLever.get(GLTFShape).addClip(leverOnR)
-    rightLever.get(GLTFShape).addClip(LeverDespawnR)
-  
-  
+
+    leftLever.setParent(trap)
     rightLever.setParent(trap)
-    
-    //if (!rightLever.has(OnClick)){
-      rightLever.set(new OnClick(e => {
-        operateLeftLever(rightLever)
-      }))
-    //}
-
-
+   
+    leftLever.set(new OnClick(e => {
+      operateLeftLever(leftLever)
+    }))
+  
+    rightLever.set(new OnClick(e => {
+      operateRightLever(rightLever)
+    }))
+  }
+  else {
+    leftLever = trap.children[0]
+    rightLever = trap.children[1]
   }
 
- 
+  engine.addEntity(leftLever)
+  engine.addEntity(rightLever) 
 
+  leftLever.set(new GLTFShape("models/Lever/LeverBlue.gltf"))
+  const leverOffL = new AnimationClip("LeverOff", {loop: false})
+  const leverOnL= new AnimationClip("LeverOn", {loop: false})
+  const LeverDespawnL= new AnimationClip("LeverDeSpawn", {loop: false})
+  leftLever.get(GLTFShape).addClip(leverOffL)
+  leftLever.get(GLTFShape).addClip(leverOnL)
+  leftLever.get(GLTFShape).addClip(LeverDespawnL)
+  
+  rightLever.set(new GLTFShape("models/Lever/LeverRed.gltf"))
+  const leverOffR = new AnimationClip("LeverOff", {loop: false})
+  const leverOnR= new AnimationClip("LeverOn", {loop: false})
+  const LeverDespawnR= new AnimationClip("LeverDeSpawn", {loop: false})
+  rightLever.get(GLTFShape).addClip(leverOffR)
+  rightLever.get(GLTFShape).addClip(leverOnR)
+  rightLever.get(GLTFShape).addClip(LeverDespawnR) 
+  
 }
 
 
@@ -406,12 +405,13 @@ function randomTrapPosition()
 
 function operateLeftLever(lever: Entity){
   let data = lever.getParent().get(TrapData)
-  if(data.leftLever){
-    data.leftLever = false
-    lever.get(GLTFShape).getClip("LeverOff").play()
-  } else {
+  if(!data.leftLever){
+  //   data.leftLever = false
+  //   lever.get(GLTFShape).getClip("LeverOff").play()
+  // } else {
+    log("clicked left lever")
     data.leftLever = true
-    lever.get(GLTFShape).getClip("LeverOn").play()
+    lever.get(GLTFShape).getClip("LeverOff").play()
     if (data.rightLever){
       data.trapState = TrapState.Fired
       lever.getParent().get(GLTFShape).getClip("SpikeUp").play()
@@ -421,12 +421,13 @@ function operateLeftLever(lever: Entity){
 
 function operateRightLever(lever: Entity){
   let data = lever.getParent().get(TrapData)
-  if(data.rightLever){
-    data.rightLever = false
-    lever.get(GLTFShape).getClip("LeverOff").play()
-  } else {
+  if(!data.rightLever){
+  //   data.rightLever = false
+  //   lever.get(GLTFShape).getClip("LeverOff").play()
+  // } else {
+    log("clicked right lever")
     data.rightLever = true
-    lever.get(GLTFShape).getClip("LeverOn").play()
+    lever.get(GLTFShape).getClip("LeverOff").play()
     if (data.leftLever){
       data.trapState = TrapState.Fired
       lever.getParent().get(GLTFShape).getClip("SpikeUp").play()
