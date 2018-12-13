@@ -51,7 +51,7 @@ button.set(new Transform())
 button.set(new CylinderShape())
 button.set(buttonMaterial)
 button.get(Transform).scale.set(.05, .2, .05)
-button.get(Transform).rotation.eulerAngles = new Vector3(90, 0, 0)
+button.get(Transform).rotation.setEuler(90, 0, 0)
 button.get(Transform).position.set(0, 1, -0.3)
 let buttonData = new ButtonData(-0.3, -0.2)
 button.setParent(scoreBoard)
@@ -201,11 +201,11 @@ export function spawnTrap(){
 
     let lt = leftLever.getOrCreate(Transform)
     lt.position.set(-1.5, 0, 0)
-    lt.rotation.eulerAngles = new Vector3(0, 90, 0)
+    lt.rotation.setEuler(0, 90, 0)
 
     let rt = rightLever.getOrCreate(Transform)
     rt.position.set(1.5, 0, 0)
-    rt.rotation.eulerAngles = new Vector3(0, 90, 0)
+    rt.rotation.setEuler(0, 90, 0)
 
     leftLever.setParent(trap)
     rightLever.setParent(trap)
