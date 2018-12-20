@@ -1,6 +1,6 @@
 
-import { CreepData, TrapData, TrapState, ButtonData, GameData, TilePos, Pool } from "./components"
-import { creeps, traps, buttons, tiles } from "./components"
+import { CreepData, TrapData, TrapState, ButtonData, GameData, TilePos, Pool, Expiration } from "./components"
+import { creeps, traps, buttons, tiles, toExpire } from "./components"
 import { gameData, scoreTextCreeps, scoreTextHumans, spawnCreep, spawnTrap} from "./game";
 
 
@@ -17,9 +17,10 @@ export class SpawnCreeps implements ISystem {
   export class moveBlobs implements ISystem {
     update() {
       for( let creep of creeps.entities){
+        let creepData = creep.get(CreepData)
+        if (creepData.isDead){break}
         let transform = creep.get(Transform)
         let path =  gameData.path
-        let creepData = creep.get(CreepData)
         if (creepData.lerpFraction < 1) {
             const pos2d = Vector2.Lerp(
             path[creepData.pathPos],
@@ -56,10 +57,18 @@ export class SpawnCreeps implements ISystem {
 
 
   export class killBlobs implements ISystem {
-    update() {
+    update(dt:number) {
       for (let trap of traps.entities){
         let trapData = trap.get(TrapData)
         if (trapData.trapState == TrapState.Fired){
+          trapData.remainingTime -= dt
+          if(trapData.remainingTime < 0){
+            trap.get(GLTFShape).getClip("Despawn").play()
+            trapData.trapState = TrapState.NotAvailable
+            trap.set(new Expiration())
+            spawnTrap()
+          }
+
           for( let creep of creeps.entities){
           
             let creepData = creep.get(CreepData)
@@ -67,12 +76,15 @@ export class SpawnCreeps implements ISystem {
               && creepData.isDead == false){
                 log("KILL")
                 creepData.isDead = true
-                creep.get(GLTFShape).getClip("clipDie").play()
-                trap.get(GLTFShape).getClip("Despawn").play()
+                creep.get(GLTFShape).getClip("Dying").play()
+                creep.set(new Expiration())
+
                 gameData.humanScore += 1
                 scoreTextHumans.get(TextShape).value = gameData.humanScore.toString()
-                engine.removeEntity(creep)
-                engine.removeEntity(trap, true)
+                
+                trap.get(GLTFShape).getClip("Despawn").play()
+                trapData.trapState = TrapState.NotAvailable
+                trap.set(new Expiration())
                 spawnTrap()
               }    
           }
@@ -105,6 +117,17 @@ export class SpawnCreeps implements ISystem {
     }
   }
 
+  export class ExpireDead implements ISystem {
+    update(dt:number){
+      for (let ent of toExpire.entities){
+        let exp = ent.get(Expiration)
+        exp.timeLeft -= dt
+        if (exp.timeLeft < 0){
+          engine.removeEntity(ent, true)
+        }       
+      }
+    }
+  }
 
 
 engine.addSystem(new SpawnCreeps())
@@ -114,3 +137,5 @@ engine.addSystem(new moveBlobs())
 engine.addSystem(new killBlobs())
 
 engine.addSystem(new PushButton())
+
+engine.addSystem(new ExpireDead() )

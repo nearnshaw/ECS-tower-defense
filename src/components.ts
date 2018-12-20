@@ -1,7 +1,8 @@
 ////////////////////////////////////
 // Custom components
 
-
+// time for traps to be active
+const ACTIVE_TIME = 3 //(seconds)
 
 export const enum TrapState 
 {
@@ -53,17 +54,20 @@ export class TrapData {
   trapState: TrapState
   leftLever: boolean
   rightLever: boolean
+  remainingTime: number
   constructor(pathPos?: number) {
     this.pathPos = pathPos
     this.trapState = TrapState.Available
     this.leftLever = false
     this.rightLever = false
+    this.remainingTime = ACTIVE_TIME
   }
   reset(pathPos: number) {
     this.pathPos = pathPos
     this.trapState = TrapState.Available
     this.leftLever = false
     this.rightLever = false
+    this.remainingTime = ACTIVE_TIME
   }
 }
 
@@ -109,3 +113,15 @@ export class Pool {
       return instance
     }
   }
+
+@Component('expiration')
+export class Expiration {
+  dying: boolean = false
+  timeLeft: number = 1.5
+  reset() {
+    this.dying = false
+    this.timeLeft = 1.5
+  }
+}
+
+export const toExpire = engine.getComponentGroup(Expiration)

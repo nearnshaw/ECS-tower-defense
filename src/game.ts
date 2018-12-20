@@ -1,4 +1,4 @@
-import { CreepData, TrapData, TrapState, ButtonData, GameData, TilePos, Pool } from "./components"
+import { CreepData, TrapData, TrapState, ButtonData, GameData, TilePos, Pool, Expiration } from "./components"
 import { creeps, traps, buttons, tiles } from "./components"
 import { SpawnCreeps, moveBlobs, killBlobs, PushButton} from "./systems";
 
@@ -7,6 +7,7 @@ import { SpawnCreeps, moveBlobs, killBlobs, PushButton} from "./systems";
 
 const MAX_TRAPS = 2
 const MAX_CREEPS = 4
+
 
 
 
@@ -186,9 +187,13 @@ export function spawnTrap(){
     trap.set(new TrapData(posIndex))
   }
 
+  if ( trap.has(Expiration)){
+    trap.remove(Expiration)
+  }
+
   trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
   const spikeUp = new AnimationClip("SpikeUp", {loop: false, speed: 0.5})
-  const despawn= new AnimationClip("Despawn", {loop: false})
+  const despawn= new AnimationClip("Despawn", {loop: false, speed: 3})
   trap.get(GLTFShape).addClip(spikeUp)
   trap.get(GLTFShape).addClip(despawn)
   
@@ -282,6 +287,10 @@ export function spawnCreep(){
     ent.get(GLTFShape).addClip(clipWalk)
     ent.get(GLTFShape).addClip(clipDie)
     clipWalk.play()
+  }
+
+  if ( ent.has(Expiration)){
+    ent.remove(Expiration)
   }
     
   engine.addEntity(ent)
