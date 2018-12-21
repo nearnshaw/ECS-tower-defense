@@ -4,6 +4,9 @@
 // time for traps to be active
 const ACTIVE_TIME = 3 //(seconds)
 
+// time for despawn animations
+const EXPIRATION_TIME = 2
+
 export const enum TrapState 
 {
   Available,
@@ -94,13 +97,21 @@ export class Pool {
         this.max = max
     }
     getEntity() {
+      
       for (let i = 0; i < this.pool.length; i++) {
         const entity = this.pool[i]
         if (!entity.alive) {
           return entity
         }
       }
-      if (this.pool.length < this.max){
+      let expiring = 0
+      for (let i = 0; i < this.pool.length; i++) {
+        const entity = this.pool[i]
+        if (entity.has(Expiration)){
+          expiring +=1
+        }
+      }
+      if (this.pool.length < (this.max + expiring)){
         return this.newEntity()
       } else {
         return null
@@ -117,10 +128,10 @@ export class Pool {
 @Component('expiration')
 export class Expiration {
   dying: boolean = false
-  timeLeft: number = 1.5
+  timeLeft: number = EXPIRATION_TIME
   reset() {
     this.dying = false
-    this.timeLeft = 1.5
+    this.timeLeft = EXPIRATION_TIME
   }
 }
 

@@ -123,6 +123,7 @@ export class SpawnCreeps implements ISystem {
         let exp = ent.get(Expiration)
         exp.timeLeft -= dt
         if (exp.timeLeft < 0){
+          ent.remove(Expiration)
           engine.removeEntity(ent, true)
         }       
       }

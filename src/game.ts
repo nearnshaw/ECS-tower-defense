@@ -60,7 +60,7 @@ button.set(buttonData)
 buttonData.label = "New Game"
 button.set(
   new OnClick(e => {
-    log("clicked")
+    //log("clicked")
     buttonData.pressed = true
     newGame()
     // button up
@@ -152,8 +152,7 @@ function newGame(){
     spawnTile(pos)
   }
 
-  log('creating tiles')
-  log(tiles.entities.length)
+  log('creating tiles',tiles.entities.length)
 
   // add traps
   placeTraps()
@@ -193,7 +192,7 @@ export function spawnTrap(){
 
   trap.set(new GLTFShape("models/SpikeTrap/SpikeTrap.gltf"))
   const spikeUp = new AnimationClip("SpikeUp", {loop: false, speed: 0.5})
-  const despawn= new AnimationClip("Despawn", {loop: false, speed: 3})
+  const despawn= new AnimationClip("Despawn", {loop: false, speed: 1})
   trap.get(GLTFShape).addClip(spikeUp)
   trap.get(GLTFShape).addClip(despawn)
   
@@ -246,6 +245,8 @@ export function spawnTrap(){
   rightLever.get(GLTFShape).addClip(leverOffR)
   rightLever.get(GLTFShape).addClip(leverOnR)
   rightLever.get(GLTFShape).addClip(LeverDespawnR) 
+
+  log("new trap", trapPool.pool.length)
   
 }
 
@@ -270,10 +271,13 @@ export function spawnTile(pos: Vector2) {
 export function spawnCreep(){
   let ent = creepPool.getEntity()
   if (!ent) return
-  log("new creep")
+  log("new creep", creepPool.pool.length)
+
+  let firstTarget = new Vector3(gameData.path[1].x, 0.25, gameData.path[1].y)
 
   let t = ent.getOrCreate(Transform)
   t.position.set(10, 0.25, 1)
+  t.lookAt(firstTarget)
 
   let d = ent.getOrCreate(CreepData)
   d.isDead = false
@@ -418,7 +422,7 @@ export function operateLeftLever(lever: Entity){
   //   data.leftLever = false
   //   lever.get(GLTFShape).getClip("LeverOff").play()
   // } else {
-    log("clicked left lever")
+    //log("clicked left lever")
     data.leftLever = true
     lever.get(GLTFShape).getClip("LeverOff").play()
     if (data.rightLever){
@@ -434,7 +438,7 @@ export function operateRightLever(lever: Entity){
   //   data.rightLever = false
   //   lever.get(GLTFShape).getClip("LeverOff").play()
   // } else {
-    log("clicked right lever")
+    //log("clicked right lever")
     data.rightLever = true
     lever.get(GLTFShape).getClip("LeverOff").play()
     if (data.leftLever){
