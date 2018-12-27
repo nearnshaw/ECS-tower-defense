@@ -29,10 +29,11 @@ const groundMaterial = new Material
 groundMaterial.albedoTexture = "materials/StoneFloor.png"
 
 let ground = new Entity()
-ground.set(new Transform())
-ground.get(Transform).position.set(10, 0, 10)
-ground.get(Transform).rotation.setEuler(90, 0, 0)
-ground.get(Transform).scale.setAll(20)
+ground.set(new Transform({
+  position: new Vector3(10, 0, 10),
+  rotation: Quaternion.Euler(90, 0, 0),
+  scale: new Vector3(20, 20, 20)
+}))
 ground.set(new PlaneShape)
 ground.set(groundMaterial)
 engine.addEntity(ground)
@@ -40,22 +41,24 @@ engine.addEntity(ground)
 
 let scoreBoard = new Entity()
 scoreBoard.set(new GLTFShape("models/ScoreRock/ScoreRock.gltf"))
-scoreBoard.set(new Transform())
-scoreBoard.get(Transform).position.set(18.99, 0, 19)
+scoreBoard.set(new Transform({
+  position: new Vector3(18.99, 0, 19)
+}))
 engine.addEntity(scoreBoard)
 
 let buttonMaterial = new Material()
 buttonMaterial.albedoColor = Color3.FromHexString("#990000") 
 
 const button = new Entity()
-button.set(new Transform())
+button.setParent(scoreBoard)
+button.set(new Transform({
+  position: new Vector3(0, 1, -0.3),
+  rotation: Quaternion.Euler(90, 0, 0),
+  scale: new Vector3(.05, .2, .05)
+}))
 button.set(new CylinderShape())
 button.set(buttonMaterial)
-button.get(Transform).scale.set(.05, .2, .05)
-button.get(Transform).rotation.setEuler(90, 0, 0)
-button.get(Transform).position.set(0, 1, -0.3)
 let buttonData = new ButtonData(-0.3, -0.2)
-button.setParent(scoreBoard)
 button.set(buttonData)
 buttonData.label = "New Game"
 button.set(
@@ -72,48 +75,54 @@ let buttonLabel = new Entity()
 buttonLabel.setParent(scoreBoard)
 buttonLabel.set(new TextShape("New game"))
 buttonLabel.get(TextShape).fontSize = 50
-buttonLabel.set(new Transform())
-buttonLabel.get(Transform).position.set(0, 0.85, -.38)
+buttonLabel.set(new Transform({
+  position: new Vector3(0, 0.85, -.38)
+}))
 engine.addEntity(buttonLabel)
 
 let scoreText1 = new Entity()
 scoreText1.setParent(scoreBoard)
 scoreText1.set(new TextShape("humans"))
 scoreText1.get(TextShape).fontSize = 50
-scoreText1.set(new Transform())
-scoreText1.get(Transform).position.set(-.4, .1, -.38)
+scoreText1.set(new Transform({
+  position: new Vector3(-.4, .1, -.38)
+}))
 engine.addEntity(scoreText1)
 
 let scoreText2 = new Entity()
 scoreText2.setParent(scoreBoard)
 scoreText2.set(new TextShape("creps"))
 scoreText2.get(TextShape).fontSize = 50
-scoreText2.set(new Transform())
-scoreText2.get(Transform).position.set(.4, .1, -.38)
+scoreText2.set(new Transform({
+  position: new Vector3(.4, .1, -.38)
+}))
 engine.addEntity(scoreText2)
 
 let scoreText3 = new Entity()
 scoreText3.setParent(scoreBoard)
 scoreText3.set(new TextShape("vs"))
 scoreText3.get(TextShape).fontSize = 100
-scoreText3.set(new Transform())
-scoreText3.get(Transform).position.set(0, .35, -.38)
+scoreText3.set(new Transform({
+  position: new Vector3(0, .35, -.38)
+}))
 engine.addEntity(scoreText3)
 
 export let scoreTextHumans = new Entity()
 scoreTextHumans.setParent(scoreBoard)
 scoreTextHumans.set(new TextShape(gameData.humanScore.toString()))
 scoreTextHumans.get(TextShape).fontSize = 200
-scoreTextHumans.set(new Transform())
-scoreTextHumans.get(Transform).position.set(-.4, .35, -.38)
+scoreTextHumans.set(new Transform({
+  position: new Vector3(-.4, .35, -.38)
+}))
 engine.addEntity(scoreTextHumans)
 
 export let scoreTextCreeps = new Entity()
 scoreTextCreeps.setParent(scoreBoard)
 scoreTextCreeps.set(new TextShape(gameData.creepScore.toString()))
 scoreTextCreeps.get(TextShape).fontSize = 200
-scoreTextCreeps.set(new Transform())
-scoreTextCreeps.get(Transform).position.set(.4, .35, -.38)
+scoreTextCreeps.set(new Transform({
+  position: new Vector3(.4, .35, -.38)
+}))
 engine.addEntity(scoreTextCreeps)
 
 ///////////////////////////////////
